@@ -97,23 +97,21 @@ export function createPlayerDummyGroup(): THREE.Group {
   rearFoot.receiveShadow = true;
   dummy.add(rearFoot);
 
-  // 2. SKELETON JOINT KEYPOINTS (Connected kinematically)
-  const rAnkle = new THREE.Vector3(0.08, 0.07, leadZ + 0.18);
-  const lAnkle = new THREE.Vector3(-0.16, 0.07, leadZ + 0.28);
+  // 2. SKELETON JOINT KEYPOINTS (Aligned to central spine plane at leadZ + 0.18)
+  const spineZ = leadZ + 0.18;
 
-  const rKnee = new THREE.Vector3(0.08, 0.49, leadZ + 0.17);
-  const lKnee = new THREE.Vector3(-0.14, 0.49, leadZ + 0.26);
+  const rAnkle = new THREE.Vector3(0.08, 0.07, spineZ);
+  const lAnkle = new THREE.Vector3(-0.14, 0.07, spineZ + 0.08);
 
-  const rHip = new THREE.Vector3(0.08, 0.90, leadZ + 0.16);
-  const lHip = new THREE.Vector3(-0.12, 0.90, leadZ + 0.22);
-  const pelvisMid = new THREE.Vector3(-0.02, 0.92, leadZ + 0.19);
+  const rKnee = new THREE.Vector3(0.08, 0.49, spineZ);
+  const lKnee = new THREE.Vector3(-0.12, 0.49, spineZ + 0.04);
 
-  const spineMid = new THREE.Vector3(-0.01, 1.15, leadZ + 0.17);
-  const chestMid = new THREE.Vector3(-0.01, 1.34, leadZ + 0.15);
+  const rHip = new THREE.Vector3(0.10, 0.90, spineZ);
+  const lHip = new THREE.Vector3(-0.10, 0.90, spineZ);
 
-  const rShoulder = new THREE.Vector3(0.18, 1.42, leadZ + 0.14);
-  const lShoulder = new THREE.Vector3(-0.20, 1.42, leadZ + 0.17);
-  const headCenter = new THREE.Vector3(-0.01, 1.66, leadZ + 0.14);
+  const rShoulder = new THREE.Vector3(0.18, 1.42, spineZ);
+  const lShoulder = new THREE.Vector3(-0.18, 1.42, spineZ);
+  const headCenter = new THREE.Vector3(0.0, 1.67, spineZ);
 
   // 3. LEGS (Seamless connecting capsules)
   // Shins / Calves
@@ -134,47 +132,39 @@ export function createPlayerDummyGroup(): THREE.Group {
   dummy.add(createConnectedLimb(rKnee, rHip, 0.055, mannequinMat, 'dummy-right-thigh'));
   dummy.add(createConnectedLimb(lKnee, lHip, 0.055, mannequinMat, 'dummy-left-thigh'));
 
-  // 4. PELVIS & TORSO
-  const torsoGroup = new THREE.Group();
-  torsoGroup.name = 'dummy-torso';
+  // Hip joint spheres
+  const hipGeom = new THREE.SphereGeometry(0.052, 16, 16);
+  const rHipMesh = new THREE.Mesh(hipGeom, jointMat);
+  rHipMesh.position.copy(rHip);
+  dummy.add(rHipMesh);
 
-  // Pelvis / Hips (smooth horizontal capsule)
-  const pelvisGeom = new THREE.CapsuleGeometry(0.08, 0.16, 8, 16);
-  pelvisGeom.rotateZ(Math.PI / 2);
-  const pelvisMesh = new THREE.Mesh(pelvisGeom, mannequinMat);
-  pelvisMesh.position.copy(pelvisMid);
-  pelvisMesh.castShadow = true;
-  torsoGroup.add(pelvisMesh);
+  const lHipMesh = new THREE.Mesh(hipGeom, jointMat);
+  lHipMesh.position.copy(lHip);
+  dummy.add(lHipMesh);
 
-  // Abdomen
-  const abdomenGeom = new THREE.CapsuleGeometry(0.11, 0.16, 8, 16);
-  const abdomenMesh = new THREE.Mesh(abdomenGeom, mannequinMat);
-  abdomenMesh.position.copy(spineMid);
-  abdomenMesh.castShadow = true;
-  torsoGroup.add(abdomenMesh);
-
-  // Chest / Ribcage
-  const chestGeom = new THREE.CapsuleGeometry(0.13, 0.18, 8, 16);
-  chestGeom.rotateZ(Math.PI / 12);
-  const chestMesh = new THREE.Mesh(chestGeom, mannequinMat);
-  chestMesh.position.copy(chestMid);
-  chestMesh.castShadow = true;
-  torsoGroup.add(chestMesh);
-
-  dummy.add(torsoGroup);
+  // 4. TORSO (Single unified anatomical piece from hips to shoulders)
+  // Clean continuous anatomical capsule: broader across chest/shoulders, flatter front-to-back
+  const torsoGeom = new THREE.CapsuleGeometry(0.13, 0.32, 12, 24);
+  torsoGeom.scale(1.28, 1.0, 0.84);
+  const torsoMesh = new THREE.Mesh(torsoGeom, mannequinMat);
+  torsoMesh.name = 'dummy-torso';
+  torsoMesh.position.set(0.0, 1.17, spineZ);
+  torsoMesh.castShadow = true;
+  torsoMesh.receiveShadow = true;
+  dummy.add(torsoMesh);
 
   // 5. NECK & HEAD
   // Neck
   const neckGeom = new THREE.CylinderGeometry(0.045, 0.052, 0.10, 16);
   const neckMesh = new THREE.Mesh(neckGeom, mannequinMat);
-  neckMesh.position.set(-0.01, 1.53, leadZ + 0.15);
+  neckMesh.position.set(0.0, 1.50, spineZ);
   dummy.add(neckMesh);
 
   // Head (Smooth anatomical egg/capsule shape, top reaches exactly 1.78m)
   const headGroup = new THREE.Group();
   headGroup.name = 'dummy-head';
 
-  // Radius 0.085m, length 0.05m -> total height = 0.05 + 2 * 0.085 = 0.22m
+  // Radius 0.082m, length 0.056m -> height = 0.056 + 2*0.082 = 0.22m
   // Centered at Y = 1.67m -> top reaches 1.67 + 0.11 = 1.78m!
   const headGeom = new THREE.CapsuleGeometry(0.082, 0.056, 12, 24);
   const headMesh = new THREE.Mesh(headGeom, mannequinMat);
@@ -202,8 +192,8 @@ export function createPlayerDummyGroup(): THREE.Group {
   dummy.add(lShoulderMesh);
 
   // 7. LEFT ARM (Rests cleanly at player's side)
-  const lElbow = new THREE.Vector3(-0.21, 1.15, leadZ + 0.17);
-  const lWrist = new THREE.Vector3(-0.21, 0.88, leadZ + 0.17);
+  const lElbow = new THREE.Vector3(-0.19, 1.15, spineZ);
+  const lWrist = new THREE.Vector3(-0.19, 0.88, spineZ);
 
   dummy.add(createConnectedLimb(lShoulder, lElbow, 0.038, mannequinMat, 'dummy-left-upper-arm'));
   const lElbowMesh = new THREE.Mesh(new THREE.SphereGeometry(0.036, 16, 16), jointMat);
@@ -220,9 +210,9 @@ export function createPlayerDummyGroup(): THREE.Group {
   throwingArmGroup.name = 'dummy-throwing-arm';
 
   // Elbow poised forward at chest height
-  const rElbow = new THREE.Vector3(0.15, 1.38, leadZ - 0.05);
+  const rElbow = new THREE.Vector3(0.16, 1.38, spineZ - 0.22);
   // Wrist / hand at eye level release point
-  const rWrist = new THREE.Vector3(0.08, 1.58, leadZ - 0.16);
+  const rWrist = new THREE.Vector3(0.08, 1.58, spineZ - 0.34);
 
   // Upper arm capsule
   throwingArmGroup.add(createConnectedLimb(rShoulder, rElbow, 0.038, mannequinMat));
