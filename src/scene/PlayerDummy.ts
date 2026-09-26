@@ -2,239 +2,250 @@ import * as THREE from 'three';
 import { DARTS_DIMENSIONS } from '../constants/dartsDimensions';
 
 /**
- * Creates a stylized architectural 3D Player Mannequin positioned at the throw line.
- * Stature: Average adult male height 1.78m (5' 10"), eye height ~1.67m.
- * Stance: Standard tournament side-on darts stance with lead foot at Z = 2.37m
- * and right arm in throwing position.
+ * Creates a clean, mathematically aligned capsule limb connecting p1 and p2.
+ */
+function createConnectedLimb(
+  p1: THREE.Vector3,
+  p2: THREE.Vector3,
+  radius: number,
+  material: THREE.Material,
+  name?: string
+): THREE.Mesh {
+  const dir = new THREE.Vector3().subVectors(p2, p1);
+  const length = dir.length();
+  const cylinderLength = Math.max(0.001, length - 2 * radius);
+
+  const geom = new THREE.CapsuleGeometry(radius, cylinderLength, 8, 16);
+  const mesh = new THREE.Mesh(geom, material);
+  if (name) mesh.name = name;
+
+  // Position at midpoint
+  const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+  mesh.position.copy(mid);
+
+  // Align with vector p1 -> p2
+  const up = new THREE.Vector3(0, 1, 0);
+  const norm = dir.clone().normalize();
+  if (Math.abs(up.dot(norm)) < 0.9999) {
+    mesh.quaternion.setFromUnitVectors(up, norm);
+  } else if (norm.y < 0) {
+    mesh.rotation.x = Math.PI;
+  }
+
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+/**
+ * Builds a clean, cohesive architectural 3D Player Mannequin.
+ * Height: 1.78m (5' 10") average adult male stature.
+ * Stance: Clean tournament stance at throw line (Z = 2.37m).
+ * Architecture: Seamless connected capsules with zero disjointed floating parts.
  */
 export function createPlayerDummyGroup(): THREE.Group {
   const dummy = new THREE.Group();
   dummy.name = 'player-dummy';
 
-  // 1. Mannequin Materials (Sleek semi-translucent studio CAD style)
-  const bodyMat = new THREE.MeshStandardMaterial({
-    color: 0x94a3b8, // studio slate
-    roughness: 0.32,
-    metalness: 0.15,
+  // Uniform studio matte mannequin material (soft slate grey, smooth shading)
+  const mannequinMat = new THREE.MeshStandardMaterial({
+    color: 0x94a3b8, // clean neutral slate
+    roughness: 0.45,
+    metalness: 0.08,
     transparent: true,
     opacity: 0.85
   });
 
   const jointMat = new THREE.MeshStandardMaterial({
-    color: 0x38bdf8, // cyan architectural joint accent
-    roughness: 0.22,
-    metalness: 0.75,
+    color: 0x64748b, // subtle darker joint tone
+    roughness: 0.35,
+    metalness: 0.15,
     transparent: true,
-    opacity: 0.92
+    opacity: 0.9
   });
 
   const dartMat = new THREE.MeshStandardMaterial({
-    color: 0xd4af37, // brass dart barrel
-    roughness: 0.25,
-    metalness: 0.9
-  });
-
-  const flightMat = new THREE.MeshStandardMaterial({
-    color: 0x0284c7, // cyan dart flights
+    color: 0xd4af37,
     roughness: 0.3,
-    metalness: 0.1
+    metalness: 0.85
   });
 
-  // Base coordinate reference for player
-  // Lead foot front edge aligns exactly with Z = 2.37m
-  const leadZFront = DARTS_DIMENSIONS.OCHE_DISTANCE_METERS; // 2.37m
-  const footLength = 0.27; // 27cm shoe
-  const footWidth = 0.10;
-  const footHeight = 0.07;
+  // Reference coordinates
+  const leadZ = DARTS_DIMENSIONS.OCHE_DISTANCE_METERS; // 2.37m
+  const footLen = 0.26;
+  const footWidth = 0.09;
+  const footHeight = 0.06;
 
-  // 2. Feet (Lead Right Foot & Rear Left Foot)
-  // Lead foot (Right): pointing forward/slightly angled along the oche line
-  const leadFootGeom = new THREE.BoxGeometry(footWidth, footHeight, footLength);
-  const leadFoot = new THREE.Mesh(leadFootGeom, bodyMat);
+  // 1. FEET (Flat on floor, lead foot front tip at Z = 2.37m)
+  // Lead Foot (Right foot)
+  const leadFootGeom = new THREE.BoxGeometry(footWidth, footHeight, footLen);
+  const leadFoot = new THREE.Mesh(leadFootGeom, mannequinMat);
   leadFoot.name = 'dummy-lead-foot';
-  // Position so front face (min Z) is at exactly 2.37m
-  leadFoot.position.set(0.06, footHeight / 2 + 0.002, leadZFront + footLength / 2);
+  // Center Z is 2.37 + footLen/2 so min Z is exactly 2.37m
+  leadFoot.position.set(0.08, footHeight / 2 + 0.001, leadZ + footLen / 2);
   leadFoot.castShadow = true;
   leadFoot.receiveShadow = true;
   dummy.add(leadFoot);
 
-  // Rear foot (Left): balanced behind at an angle
-  const rearFootGeom = new THREE.BoxGeometry(footWidth, footHeight, footLength);
-  const rearFoot = new THREE.Mesh(rearFootGeom, bodyMat);
+  // Rear Foot (Left foot, angled naturally back)
+  const rearFootGeom = new THREE.BoxGeometry(footWidth, footHeight, footLen);
+  const rearFoot = new THREE.Mesh(rearFootGeom, mannequinMat);
   rearFoot.name = 'dummy-rear-foot';
-  rearFoot.rotation.y = -Math.PI / 4;
-  rearFoot.position.set(-0.16, footHeight / 2 + 0.002, leadZFront + 0.32);
+  rearFoot.rotation.y = -Math.PI / 6;
+  rearFoot.position.set(-0.16, footHeight / 2 + 0.001, leadZ + 0.28);
   rearFoot.castShadow = true;
   rearFoot.receiveShadow = true;
   dummy.add(rearFoot);
 
-  // Ankle Joints
-  const ankleGeom = new THREE.SphereGeometry(0.042, 16, 16);
-  const rightAnkle = new THREE.Mesh(ankleGeom, jointMat);
-  rightAnkle.position.set(0.06, 0.09, leadFoot.position.z);
-  dummy.add(rightAnkle);
+  // 2. SKELETON JOINT KEYPOINTS (Connected kinematically)
+  const rAnkle = new THREE.Vector3(0.08, 0.07, leadZ + 0.18);
+  const lAnkle = new THREE.Vector3(-0.16, 0.07, leadZ + 0.28);
 
-  const leftAnkle = new THREE.Mesh(ankleGeom, jointMat);
-  leftAnkle.position.set(-0.16, 0.09, rearFoot.position.z);
-  dummy.add(leftAnkle);
+  const rKnee = new THREE.Vector3(0.08, 0.49, leadZ + 0.17);
+  const lKnee = new THREE.Vector3(-0.14, 0.49, leadZ + 0.26);
 
-  // 3. Lower Legs (Calves) & Knees
-  const calfGeom = new THREE.CylinderGeometry(0.048, 0.042, 0.42, 16);
-  const rightCalf = new THREE.Mesh(calfGeom, bodyMat);
-  rightCalf.position.set(0.06, 0.31, leadFoot.position.z - 0.02);
-  rightCalf.castShadow = true;
-  dummy.add(rightCalf);
+  const rHip = new THREE.Vector3(0.08, 0.90, leadZ + 0.16);
+  const lHip = new THREE.Vector3(-0.12, 0.90, leadZ + 0.22);
+  const pelvisMid = new THREE.Vector3(-0.02, 0.92, leadZ + 0.19);
 
-  const leftCalf = new THREE.Mesh(calfGeom, bodyMat);
-  leftCalf.position.set(-0.16, 0.31, rearFoot.position.z);
-  leftCalf.castShadow = true;
-  dummy.add(leftCalf);
+  const spineMid = new THREE.Vector3(-0.01, 1.15, leadZ + 0.17);
+  const chestMid = new THREE.Vector3(-0.01, 1.34, leadZ + 0.15);
 
-  const kneeGeom = new THREE.SphereGeometry(0.048, 16, 16);
-  const rightKnee = new THREE.Mesh(kneeGeom, jointMat);
-  rightKnee.position.set(0.06, 0.53, leadFoot.position.z - 0.02);
-  dummy.add(rightKnee);
+  const rShoulder = new THREE.Vector3(0.18, 1.42, leadZ + 0.14);
+  const lShoulder = new THREE.Vector3(-0.20, 1.42, leadZ + 0.17);
+  const headCenter = new THREE.Vector3(-0.01, 1.66, leadZ + 0.14);
 
-  const leftKnee = new THREE.Mesh(kneeGeom, jointMat);
-  leftKnee.position.set(-0.16, 0.53, rearFoot.position.z);
-  dummy.add(leftKnee);
+  // 3. LEGS (Seamless connecting capsules)
+  // Shins / Calves
+  dummy.add(createConnectedLimb(rAnkle, rKnee, 0.044, mannequinMat, 'dummy-right-shin'));
+  dummy.add(createConnectedLimb(lAnkle, lKnee, 0.044, mannequinMat, 'dummy-left-shin'));
 
-  // 4. Thighs & Pelvis
-  const thighGeom = new THREE.CylinderGeometry(0.062, 0.05, 0.42, 16);
-  const rightThigh = new THREE.Mesh(thighGeom, bodyMat);
-  rightThigh.position.set(0.05, 0.75, leadFoot.position.z + 0.01);
-  rightThigh.castShadow = true;
-  dummy.add(rightThigh);
+  // Knee joint spheres
+  const kneeGeom = new THREE.SphereGeometry(0.046, 16, 16);
+  const rKneeMesh = new THREE.Mesh(kneeGeom, jointMat);
+  rKneeMesh.position.copy(rKnee);
+  dummy.add(rKneeMesh);
 
-  const leftThigh = new THREE.Mesh(thighGeom, bodyMat);
-  leftThigh.position.set(-0.12, 0.75, rearFoot.position.z - 0.04);
-  leftThigh.castShadow = true;
-  dummy.add(leftThigh);
+  const lKneeMesh = new THREE.Mesh(kneeGeom, jointMat);
+  lKneeMesh.position.copy(lKnee);
+  dummy.add(lKneeMesh);
 
-  // Pelvis / Hips
-  const pelvisGeom = new THREE.BoxGeometry(0.32, 0.16, 0.20);
-  const pelvis = new THREE.Mesh(pelvisGeom, bodyMat);
-  pelvis.name = 'dummy-pelvis';
-  pelvis.position.set(-0.03, 0.98, leadFoot.position.z + 0.03);
-  pelvis.rotation.y = -Math.PI / 10;
-  pelvis.castShadow = true;
-  dummy.add(pelvis);
+  // Thighs
+  dummy.add(createConnectedLimb(rKnee, rHip, 0.055, mannequinMat, 'dummy-right-thigh'));
+  dummy.add(createConnectedLimb(lKnee, lHip, 0.055, mannequinMat, 'dummy-left-thigh'));
 
-  // 5. Torso (Lower Abdomen & Upper Chest)
+  // 4. PELVIS & TORSO
   const torsoGroup = new THREE.Group();
   torsoGroup.name = 'dummy-torso';
 
-  const abdomenGeom = new THREE.CylinderGeometry(0.13, 0.14, 0.20, 16);
-  const abdomen = new THREE.Mesh(abdomenGeom, bodyMat);
-  abdomen.position.set(-0.02, 1.14, leadFoot.position.z + 0.02);
-  abdomen.castShadow = true;
-  torsoGroup.add(abdomen);
+  // Pelvis / Hips (smooth horizontal capsule)
+  const pelvisGeom = new THREE.CapsuleGeometry(0.08, 0.16, 8, 16);
+  pelvisGeom.rotateZ(Math.PI / 2);
+  const pelvisMesh = new THREE.Mesh(pelvisGeom, mannequinMat);
+  pelvisMesh.position.copy(pelvisMid);
+  pelvisMesh.castShadow = true;
+  torsoGroup.add(pelvisMesh);
 
-  const chestGeom = new THREE.BoxGeometry(0.38, 0.26, 0.22);
-  const chest = new THREE.Mesh(chestGeom, bodyMat);
-  chest.position.set(-0.01, 1.36, leadFoot.position.z + 0.01);
-  chest.rotation.y = -Math.PI / 8; // side-on throwing angle
-  chest.castShadow = true;
-  torsoGroup.add(chest);
+  // Abdomen
+  const abdomenGeom = new THREE.CapsuleGeometry(0.11, 0.16, 8, 16);
+  const abdomenMesh = new THREE.Mesh(abdomenGeom, mannequinMat);
+  abdomenMesh.position.copy(spineMid);
+  abdomenMesh.castShadow = true;
+  torsoGroup.add(abdomenMesh);
+
+  // Chest / Ribcage
+  const chestGeom = new THREE.CapsuleGeometry(0.13, 0.18, 8, 16);
+  chestGeom.rotateZ(Math.PI / 12);
+  const chestMesh = new THREE.Mesh(chestGeom, mannequinMat);
+  chestMesh.position.copy(chestMid);
+  chestMesh.castShadow = true;
+  torsoGroup.add(chestMesh);
 
   dummy.add(torsoGroup);
 
-  // 6. Shoulders, Neck & Head
-  const shoulderGeom = new THREE.SphereGeometry(0.052, 16, 16);
-
-  // Right shoulder (aiming side)
-  const rightShoulder = new THREE.Mesh(shoulderGeom, jointMat);
-  rightShoulder.position.set(0.16, 1.48, leadFoot.position.z - 0.02);
-  dummy.add(rightShoulder);
-
-  // Left shoulder (back side)
-  const leftShoulder = new THREE.Mesh(shoulderGeom, jointMat);
-  leftShoulder.position.set(-0.19, 1.48, leadFoot.position.z + 0.08);
-  dummy.add(leftShoulder);
-
+  // 5. NECK & HEAD
   // Neck
-  const neckGeom = new THREE.CylinderGeometry(0.055, 0.065, 0.10, 16);
-  const neck = new THREE.Mesh(neckGeom, bodyMat);
-  neck.position.set(-0.01, 1.53, leadFoot.position.z + 0.01);
-  dummy.add(neck);
+  const neckGeom = new THREE.CylinderGeometry(0.045, 0.052, 0.10, 16);
+  const neckMesh = new THREE.Mesh(neckGeom, mannequinMat);
+  neckMesh.position.set(-0.01, 1.53, leadZ + 0.15);
+  dummy.add(neckMesh);
 
-  // Head (stylized cranium centered at Y = 1.68m, top at 1.78m)
+  // Head (Smooth anatomical egg/capsule shape, top reaches exactly 1.78m)
   const headGroup = new THREE.Group();
   headGroup.name = 'dummy-head';
 
-  const headCraniumGeom = new THREE.SphereGeometry(0.10, 24, 24);
-  headCraniumGeom.scale(0.85, 1.0, 1.05);
-  const cranium = new THREE.Mesh(headCraniumGeom, bodyMat);
-  // Center at Y = 1.68m -> radius 0.10m means top is at 1.78m exact!
-  cranium.position.set(-0.01, 1.68, leadFoot.position.z + 0.01);
-  cranium.rotation.y = -Math.PI / 18; // turned slightly toward board
-  cranium.castShadow = true;
-  headGroup.add(cranium);
+  // Radius 0.085m, length 0.05m -> total height = 0.05 + 2 * 0.085 = 0.22m
+  // Centered at Y = 1.67m -> top reaches 1.67 + 0.11 = 1.78m!
+  const headGeom = new THREE.CapsuleGeometry(0.082, 0.056, 12, 24);
+  const headMesh = new THREE.Mesh(headGeom, mannequinMat);
+  headMesh.position.copy(headCenter);
+  headMesh.castShadow = true;
+  headGroup.add(headMesh);
 
-  // Stylized eye visor bar indicating eye level (~1.67m)
-  const visorGeom = new THREE.BoxGeometry(0.13, 0.018, 0.06);
-  const visorMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-  const visor = new THREE.Mesh(visorGeom, visorMat);
-  visor.position.set(-0.01, 1.67, leadFoot.position.z - 0.075);
-  headGroup.add(visor);
+  // Subtle clean eye line / brow feature
+  const browGeom = new THREE.BoxGeometry(0.11, 0.014, 0.04);
+  const browMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+  const browMesh = new THREE.Mesh(browGeom, browMat);
+  browMesh.position.set(headCenter.x, 1.67, headCenter.z - 0.075);
+  headGroup.add(browMesh);
 
   dummy.add(headGroup);
 
-  // 7. Left Arm (Relaxed / Rested)
-  const armGeom = new THREE.CylinderGeometry(0.04, 0.035, 0.28, 16);
-  const leftUpperArm = new THREE.Mesh(armGeom, bodyMat);
-  leftUpperArm.position.set(-0.21, 1.34, leadFoot.position.z + 0.08);
-  dummy.add(leftUpperArm);
+  // 6. SHOULDERS
+  const shoulderGeom = new THREE.SphereGeometry(0.048, 16, 16);
+  const rShoulderMesh = new THREE.Mesh(shoulderGeom, jointMat);
+  rShoulderMesh.position.copy(rShoulder);
+  dummy.add(rShoulderMesh);
 
-  const leftElbow = new THREE.Mesh(new THREE.SphereGeometry(0.038, 16, 16), jointMat);
-  leftElbow.position.set(-0.22, 1.19, leadFoot.position.z + 0.07);
-  dummy.add(leftElbow);
+  const lShoulderMesh = new THREE.Mesh(shoulderGeom, jointMat);
+  lShoulderMesh.position.copy(lShoulder);
+  dummy.add(lShoulderMesh);
 
-  const leftForearm = new THREE.Mesh(armGeom, bodyMat);
-  leftForearm.position.set(-0.20, 1.05, leadFoot.position.z + 0.04);
-  dummy.add(leftForearm);
+  // 7. LEFT ARM (Rests cleanly at player's side)
+  const lElbow = new THREE.Vector3(-0.21, 1.15, leadZ + 0.17);
+  const lWrist = new THREE.Vector3(-0.21, 0.88, leadZ + 0.17);
 
-  // 8. Right Arm (Active Throwing Stance Aiming at Board)
+  dummy.add(createConnectedLimb(lShoulder, lElbow, 0.038, mannequinMat, 'dummy-left-upper-arm'));
+  const lElbowMesh = new THREE.Mesh(new THREE.SphereGeometry(0.036, 16, 16), jointMat);
+  lElbowMesh.position.copy(lElbow);
+  dummy.add(lElbowMesh);
+
+  dummy.add(createConnectedLimb(lElbow, lWrist, 0.032, mannequinMat, 'dummy-left-forearm'));
+  const lHandMesh = new THREE.Mesh(new THREE.SphereGeometry(0.032, 16, 16), jointMat);
+  lHandMesh.position.copy(lWrist);
+  dummy.add(lHandMesh);
+
+  // 8. RIGHT ARM (Throwing stance: raised smoothly towards board)
   const throwingArmGroup = new THREE.Group();
   throwingArmGroup.name = 'dummy-throwing-arm';
 
-  // Upper arm raised forward
-  const rightUpperArmGeom = new THREE.CylinderGeometry(0.042, 0.038, 0.28, 16);
-  rightUpperArmGeom.rotateX(Math.PI / 5);
-  const rightUpperArm = new THREE.Mesh(rightUpperArmGeom, bodyMat);
-  rightUpperArm.position.set(0.15, 1.42, leadFoot.position.z - 0.12);
-  rightUpperArm.castShadow = true;
-  throwingArmGroup.add(rightUpperArm);
+  // Elbow poised forward at chest height
+  const rElbow = new THREE.Vector3(0.15, 1.38, leadZ - 0.05);
+  // Wrist / hand at eye level release point
+  const rWrist = new THREE.Vector3(0.08, 1.58, leadZ - 0.16);
 
-  // Right Elbow joint
-  const rightElbow = new THREE.Mesh(new THREE.SphereGeometry(0.04, 16, 16), jointMat);
-  rightElbow.position.set(0.14, 1.37, leadFoot.position.z - 0.22);
-  throwingArmGroup.add(rightElbow);
+  // Upper arm capsule
+  throwingArmGroup.add(createConnectedLimb(rShoulder, rElbow, 0.038, mannequinMat));
 
-  // Forearm angled up toward eye-line release point
-  const rightForearmGeom = new THREE.CylinderGeometry(0.036, 0.032, 0.26, 16);
-  rightForearmGeom.rotateX(-Math.PI / 4);
-  const rightForearm = new THREE.Mesh(rightForearmGeom, bodyMat);
-  rightForearm.position.set(0.10, 1.49, leadFoot.position.z - 0.24);
-  rightForearm.castShadow = true;
-  throwingArmGroup.add(rightForearm);
+  // Elbow joint
+  const rElbowMesh = new THREE.Mesh(new THREE.SphereGeometry(0.036, 16, 16), jointMat);
+  rElbowMesh.position.copy(rElbow);
+  throwingArmGroup.add(rElbowMesh);
 
-  // Hand holding dart
-  const rightHand = new THREE.Mesh(new THREE.SphereGeometry(0.034, 16, 16), jointMat);
-  rightHand.position.set(0.07, 1.60, leadFoot.position.z - 0.24);
-  throwingArmGroup.add(rightHand);
+  // Forearm capsule
+  throwingArmGroup.add(createConnectedLimb(rElbow, rWrist, 0.032, mannequinMat));
 
-  // Miniature brass dart poised at release height
-  const dartBarrelGeom = new THREE.CylinderGeometry(0.0035, 0.0035, 0.05, 12);
-  dartBarrelGeom.rotateX(Math.PI / 2);
-  const dartBarrel = new THREE.Mesh(dartBarrelGeom, dartMat);
-  dartBarrel.position.set(0.07, 1.62, leadFoot.position.z - 0.27);
-  throwingArmGroup.add(dartBarrel);
+  // Hand
+  const rHandMesh = new THREE.Mesh(new THREE.SphereGeometry(0.032, 16, 16), jointMat);
+  rHandMesh.position.copy(rWrist);
+  throwingArmGroup.add(rHandMesh);
 
-  const dartFlightGeom = new THREE.BoxGeometry(0.024, 0.024, 0.02);
-  const dartFlight = new THREE.Mesh(dartFlightGeom, flightMat);
-  dartFlight.position.set(0.07, 1.62, leadFoot.position.z - 0.24);
-  throwingArmGroup.add(dartFlight);
+  // Dart held in hand
+  const dartGeom = new THREE.CylinderGeometry(0.0035, 0.0035, 0.08, 12);
+  dartGeom.rotateX(Math.PI / 2);
+  const dartMesh = new THREE.Mesh(dartGeom, dartMat);
+  dartMesh.position.set(rWrist.x, rWrist.y + 0.015, rWrist.z - 0.04);
+  throwingArmGroup.add(dartMesh);
 
   dummy.add(throwingArmGroup);
 
