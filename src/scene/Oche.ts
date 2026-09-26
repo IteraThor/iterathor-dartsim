@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { DARTS_DIMENSIONS } from '../constants/dartsDimensions';
-import { createRaisedOcheBar } from './OcheBar';
 
 export function createOcheGroup(): THREE.Group {
   const group = new THREE.Group();
@@ -47,7 +46,7 @@ export function createOcheGroup(): THREE.Group {
         bCtx.fillRect(16, y + 3, 480, 2);
       }
 
-      // Realistic dark rubber beveled perimeter edge (no glowing orange lines!)
+      // Realistic dark rubber beveled perimeter edge
       // Outer bevel shadow
       ctx.strokeStyle = '#111215';
       ctx.lineWidth = 10;
@@ -66,13 +65,20 @@ export function createOcheGroup(): THREE.Group {
       bCtx.lineWidth = 3;
       bCtx.strokeRect(12, 12, 488, 2024);
 
-      // Regulation toe line indicator at 2.37m (Y=1520), muted matte finish
-      ctx.strokeStyle = '#8f2323'; // muted deep red, painted rubber look
+      // Regulation toe throw line indicator at 2.37m (Y=1517), clean matte finish
+      ctx.strokeStyle = '#991b1b'; // clean matte crimson painted rubber line
       ctx.lineWidth = 8;
       ctx.beginPath();
-      ctx.moveTo(24, 1520);
-      ctx.lineTo(488, 1520);
+      ctx.moveTo(24, 1517);
+      ctx.lineTo(488, 1517);
       ctx.stroke();
+
+      bCtx.strokeStyle = '#9a9a9a';
+      bCtx.lineWidth = 8;
+      bCtx.beginPath();
+      bCtx.moveTo(24, 1517);
+      bCtx.lineTo(488, 1517);
+      bCtx.stroke();
 
       matTexture = new THREE.CanvasTexture(matCanvas);
       matTexture.colorSpace = THREE.SRGBColorSpace;
@@ -102,17 +108,6 @@ export function createOcheGroup(): THREE.Group {
   matMesh.position.set(0, 0.002, DARTS_DIMENSIONS.MAT_LENGTH_METERS / 2);
   matMesh.receiveShadow = true;
   group.add(matMesh);
-
-  // 2. High-Depth Raised Timber Oche Bar Assembly (Regulation Toe Line)
-  // Regulation: 38mm high, 600mm wide, 50mm deep with beveled timber, metal brackets & brass plate
-  const barGroup = createRaisedOcheBar();
-  // Front edge positioned at exactly Z = 2.37m (bar center = 2.37m + 0.050m/2)
-  barGroup.position.set(
-    0,
-    DARTS_DIMENSIONS.OCHE_BAR_HEIGHT_METERS / 2 + 0.002,
-    DARTS_DIMENSIONS.OCHE_DISTANCE_METERS + DARTS_DIMENSIONS.OCHE_BAR_DEPTH_METERS / 2
-  );
-  group.add(barGroup);
 
   return group;
 }
