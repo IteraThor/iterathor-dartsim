@@ -77,6 +77,47 @@ export function createDartRoomGroup(): THREE.Group {
   crownMesh.receiveShadow = true;
   room.add(crownMesh);
 
+  // 5. Side Wall to the right of the player (X = +2.75m)
+  const sideWallTexture = createWallTexture();
+  sideWallTexture.repeat.set(2.5, 1);
+  const sideWallBump = createWallBumpMap();
+  sideWallBump.repeat.set(2.5, 1);
+
+  const sideWallGeom = new THREE.PlaneGeometry(roomDepth, roomHeight);
+  sideWallGeom.rotateY(-Math.PI / 2);
+
+  const sideWallMat = new THREE.MeshStandardMaterial({
+    map: sideWallTexture,
+    bumpMap: sideWallBump,
+    bumpScale: 0.0018,
+    roughness: 0.82,
+    metalness: 0.04,
+    side: THREE.FrontSide
+  });
+  const sideWallMesh = new THREE.Mesh(sideWallGeom, sideWallMat);
+  sideWallMesh.name = 'right-wall';
+  // Positioned at X = +roomWidth / 2 (+2.75m), spanning from back wall (Z = -0.038) forward
+  sideWallMesh.position.set(roomWidth / 2, roomHeight / 2, roomDepth / 2 - 0.038);
+  sideWallMesh.receiveShadow = true;
+  room.add(sideWallMesh);
+
+  // Side Wall Baseboard / Skirting Trim along the floor edge
+  const sideBaseboardGeom = new THREE.BoxGeometry(0.02, 0.09, roomDepth);
+  const sideBaseboardMesh = new THREE.Mesh(sideBaseboardGeom, baseboardMat);
+  sideBaseboardMesh.name = 'side-baseboard';
+  sideBaseboardMesh.position.set(roomWidth / 2 - 0.01, 0.045, roomDepth / 2 - 0.038);
+  sideBaseboardMesh.receiveShadow = true;
+  sideBaseboardMesh.castShadow = true;
+  room.add(sideBaseboardMesh);
+
+  // Side Wall Crown Trim along the ceiling edge
+  const sideCrownGeom = new THREE.BoxGeometry(0.03, 0.08, roomDepth);
+  const sideCrownMesh = new THREE.Mesh(sideCrownGeom, crownMat);
+  sideCrownMesh.name = 'side-crown-trim';
+  sideCrownMesh.position.set(roomWidth / 2 - 0.015, roomHeight - 0.04, roomDepth / 2 - 0.038);
+  sideCrownMesh.receiveShadow = true;
+  room.add(sideCrownMesh);
+
   // 4. Realistic Two-Source Lighting Setup
   // Indirect ambient bounce
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.35);

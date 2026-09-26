@@ -35,7 +35,7 @@ export class SceneManager {
     // 2. Camera: 3/4 perspective overview showing floor, mat, and board
     const aspect = container.clientWidth / container.clientHeight;
     this.camera = new THREE.PerspectiveCamera(45, aspect, 0.05, 50);
-    this.camera.position.set(2.4, 2.2, 3.6);
+    this.camera.position.set(-2.4, 2.2, 3.6);
 
     // 3. Renderer with antialiasing and soft shadows
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
@@ -87,8 +87,8 @@ export class SceneManager {
         targetLook.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS, 0);
         break;
       case 'side':
-        // Side elevation showing distance from board to oche and the floor
-        targetPos.set(2.9, 1.25, DARTS_DIMENSIONS.OCHE_DISTANCE_METERS / 2);
+        // Side elevation showing distance from board to oche, floor, and side wall
+        targetPos.set(-2.9, 1.25, DARTS_DIMENSIONS.OCHE_DISTANCE_METERS / 2);
         targetLook.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS / 2, DARTS_DIMENSIONS.OCHE_DISTANCE_METERS / 2);
         break;
       case 'top':
@@ -98,8 +98,8 @@ export class SceneManager {
         break;
       case 'isometric':
       default:
-        // Full 3D room overview showing hardwood floor, runner, and board
-        targetPos.set(2.4, 2.2, 3.6);
+        // Full 3D room overview showing hardwood floor, runner, board, and right side wall
+        targetPos.set(-2.4, 2.2, 3.6);
         targetLook.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS * 0.6, 1.1);
         break;
     }
