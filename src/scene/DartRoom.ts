@@ -78,8 +78,8 @@ export function createDartRoomGroup(): THREE.Group {
   room.add(crownMesh);
 
   // 4. Realistic Two-Source Lighting Setup
-  // Subtle indirect ambient bounce
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.22);
+  // Indirect ambient bounce
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
   room.add(ambientLight);
 
   // Fixture canister material for physical ceiling mounts
@@ -109,12 +109,13 @@ export function createDartRoomGroup(): THREE.Group {
   room.add(boardFixture);
 
   // SOURCE 2: Player Ceiling Light (Mounted overhead close to player at throw line)
-  const playerCeilingLight = new THREE.SpotLight(0xfff2e0, 2.5);
+  // Brighter wide-cone downlight to illuminate the floor and player area naturally
+  const playerCeilingLight = new THREE.SpotLight(0xfff2e0, 4.2);
   playerCeilingLight.name = 'player-ceiling-light';
-  playerCeilingLight.position.set(0, 2.75, 2.65);
-  playerCeilingLight.target.position.set(0, 0, 2.37);
-  playerCeilingLight.angle = Math.PI / 2.6;
-  playerCeilingLight.penumbra = 0.55;
+  playerCeilingLight.position.set(0, 2.75, 2.5);
+  playerCeilingLight.target.position.set(0, 0, 2.0);
+  playerCeilingLight.angle = Math.PI / 2.2;
+  playerCeilingLight.penumbra = 0.65;
   playerCeilingLight.castShadow = true;
   playerCeilingLight.shadow.mapSize.width = 1024;
   playerCeilingLight.shadow.mapSize.height = 1024;
