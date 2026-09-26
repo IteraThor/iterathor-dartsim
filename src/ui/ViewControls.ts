@@ -16,11 +16,11 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
       <div class="hud-metrics">
         <div class="metric-item">
           <span class="metric-label">Bullseye Height</span>
-          <span class="metric-value">1.73 m <small>(5' 8")</small></span>
+          <span class="metric-value">1.73 m</span>
         </div>
         <div class="metric-item">
           <span class="metric-label">Throw Distance</span>
-          <span class="metric-value">2.37 m <small>(7' 9¼")</small></span>
+          <span class="metric-value">2.37 m</span>
         </div>
         <div class="metric-item">
           <span class="metric-label">Board Diameter</span>

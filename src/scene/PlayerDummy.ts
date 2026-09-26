@@ -81,7 +81,7 @@ function createConnectedLimb(
 
 /**
  * Builds a clean, cohesive architectural 3D Player Mannequin standing straight at the throw line.
- * Height: 1.78m (5' 10") average adult male stature.
+ * Height: 1.78m average adult male stature.
  * Stance: Straight, balanced, upright standing stance with both feet parallel at Z = 2.37m.
  */
 export function createPlayerDummyGroup(): THREE.Group {
