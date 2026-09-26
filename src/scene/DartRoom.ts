@@ -128,9 +128,42 @@ export function createDartRoomGroup(): THREE.Group {
     room.add(sconceGroup);
   });
 
-  // 4. Realistic Two-Source Lighting Setup
+  // 7. Physical Wall Light Switch on Right Wall (near oche at Z = 2.45m, Y = 1.25m)
+  const lightSwitch = createWallLightSwitch(wallX, 1.25, 2.45);
+  room.add(lightSwitch);
+
+  // 8. Daylight Lighting Group (Bright sun + sky hemisphere light, toggled via light switch)
+  const daylightGroup = new THREE.Group();
+  daylightGroup.name = 'daylight-group';
+  daylightGroup.visible = false; // default evening mode
+
+  const daylightHemi = new THREE.HemisphereLight(0xe2f0fc, 0xd8c8b4, 1.5);
+  daylightHemi.name = 'daylight-hemi';
+  daylightGroup.add(daylightHemi);
+
+  const sunLight = new THREE.DirectionalLight(0xfffbf2, 2.2);
+  sunLight.name = 'daylight-sun';
+  sunLight.position.set(-3.2, 4.2, 3.2);
+  sunLight.target.position.set(0.4, 0.4, 1.4);
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.width = 2048;
+  sunLight.shadow.mapSize.height = 2048;
+  sunLight.shadow.camera.near = 0.5;
+  sunLight.shadow.camera.far = 14;
+  sunLight.shadow.camera.left = -4;
+  sunLight.shadow.camera.right = 4;
+  sunLight.shadow.camera.top = 4;
+  sunLight.shadow.camera.bottom = -4;
+  sunLight.shadow.bias = -0.0004;
+  daylightGroup.add(sunLight);
+  daylightGroup.add(sunLight.target);
+
+  room.add(daylightGroup);
+
+  // 9. Realistic Ambient & Physical Fixture Lighting Setup
   // Indirect ambient bounce
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
+  ambientLight.name = 'ambient-light';
   room.add(ambientLight);
 
   // Fixture canister material for physical ceiling mounts
@@ -284,4 +317,67 @@ function createWallSconce(wallX: number, y: number, z: number, id: number): THRE
   sconce.add(glow);
 
   return sconce;
+}
+
+/**
+ * Creates an interactive physical architectural wall rocker switch on the right wall.
+ * Includes flush faceplate, dark accent bezel, mechanical rocker, and status LED indicator.
+ */
+function createWallLightSwitch(wallX: number, y: number, z: number): THREE.Group {
+  const switchGroup = new THREE.Group();
+  switchGroup.name = 'wall-light-switch';
+  switchGroup.userData = { isInteractiveSwitch: true };
+
+  // 1. Faceplate (flush mounted against right wall at wallX = 2.75)
+  const plateMat = new THREE.MeshStandardMaterial({
+    color: 0xf4f5f7,
+    roughness: 0.3,
+    metalness: 0.1
+  });
+  const plateGeom = new THREE.BoxGeometry(0.008, 0.09, 0.09);
+  const plate = new THREE.Mesh(plateGeom, plateMat);
+  plate.name = 'switch-plate';
+  plate.position.set(wallX - 0.004, y, z);
+  plate.castShadow = true;
+  switchGroup.add(plate);
+
+  // 2. Bezel rim
+  const bezelMat = new THREE.MeshStandardMaterial({
+    color: 0x222428,
+    roughness: 0.5,
+    metalness: 0.5
+  });
+  const bezelGeom = new THREE.BoxGeometry(0.006, 0.094, 0.094);
+  const bezel = new THREE.Mesh(bezelGeom, bezelMat);
+  bezel.position.set(wallX - 0.003, y, z);
+  switchGroup.add(bezel);
+
+  // 3. Rocker switch button
+  const rockerMat = new THREE.MeshStandardMaterial({
+    color: 0xe8eaed,
+    roughness: 0.25,
+    metalness: 0.15
+  });
+  const rockerGeom = new THREE.BoxGeometry(0.010, 0.05, 0.04);
+  const rocker = new THREE.Mesh(rockerGeom, rockerMat);
+  rocker.name = 'switch-rocker';
+  rocker.position.set(wallX - 0.008, y, z);
+  // Default evening tilt: tilted slightly downward
+  rocker.rotation.z = -0.09;
+  switchGroup.add(rocker);
+
+  // 4. Tiny LED indicator pip
+  const indicatorMat = new THREE.MeshStandardMaterial({
+    color: 0xffaa00,
+    emissive: 0xff8800,
+    emissiveIntensity: 1.5,
+    roughness: 0.2
+  });
+  const indicatorGeom = new THREE.SphereGeometry(0.0025, 8, 8);
+  const indicator = new THREE.Mesh(indicatorGeom, indicatorMat);
+  indicator.name = 'switch-indicator';
+  indicator.position.set(wallX - 0.014, y + 0.016, z);
+  switchGroup.add(indicator);
+
+  return switchGroup;
 }

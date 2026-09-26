@@ -15,6 +15,16 @@ export class SceneManager {
   public dimensionGuides: THREE.Group;
   public playerDummy: THREE.Group;
 
+  public isDaylight = false;
+  private daylightGroup: THREE.Group | null = null;
+  private ambientLight: THREE.AmbientLight | null = null;
+  private wallLightSwitch: THREE.Group | null = null;
+  private daylightCallbacks: ((isDaylight: boolean) => void)[] = [];
+
+  private raycaster = new THREE.Raycaster();
+  private mouse = new THREE.Vector2();
+  private pointerDownPos = new THREE.Vector2();
+
   private isRunning = false;
   private animationFrameId = 0;
 
@@ -57,7 +67,12 @@ export class SceneManager {
     this.controls.maxDistance = 10.0;
 
     // 5. Add Scene Components
-    this.scene.add(createDartRoomGroup());
+    const room = createDartRoomGroup();
+    this.scene.add(room);
+    this.daylightGroup = room.getObjectByName('daylight-group') as THREE.Group;
+    this.ambientLight = room.getObjectByName('ambient-light') as THREE.AmbientLight;
+    this.wallLightSwitch = room.getObjectByName('wall-light-switch') as THREE.Group;
+
     this.scene.add(createDartboardGroup());
     this.scene.add(createOcheGroup());
 
@@ -67,7 +82,44 @@ export class SceneManager {
     this.playerDummy = createPlayerDummyGroup();
     this.scene.add(this.playerDummy);
 
-    // 6. Resize listener
+    // 6. Interactive Physical Light Switch raycasting on the right wall
+    const dom = this.renderer.domElement;
+    dom.addEventListener('pointerdown', (e: PointerEvent) => {
+      this.pointerDownPos.set(e.clientX, e.clientY);
+    });
+
+    dom.addEventListener('pointerup', (e: PointerEvent) => {
+      const dist = Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y);
+      if (dist < 6) { // Click, not orbit drag
+        const rect = dom.getBoundingClientRect();
+        this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        if (this.wallLightSwitch) {
+          const intersects = this.raycaster.intersectObjects(this.wallLightSwitch.children, true);
+          if (intersects.length > 0) {
+            this.toggleDaylight();
+          }
+        }
+      }
+    });
+
+    dom.addEventListener('pointermove', (e: PointerEvent) => {
+      const rect = dom.getBoundingClientRect();
+      this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      this.raycaster.setFromCamera(this.mouse, this.camera);
+      if (this.wallLightSwitch) {
+        const intersects = this.raycaster.intersectObjects(this.wallLightSwitch.children, true);
+        if (intersects.length > 0) {
+          dom.style.cursor = 'pointer';
+        } else if (dom.style.cursor === 'pointer') {
+          dom.style.cursor = 'grab';
+        }
+      }
+    });
+
+    // 7. Resize listener
     window.addEventListener('resize', this.onWindowResize);
   }
 
@@ -128,6 +180,48 @@ export class SceneManager {
   public togglePlayerDummy(visible?: boolean): boolean {
     this.playerDummy.visible = visible !== undefined ? visible : !this.playerDummy.visible;
     return this.playerDummy.visible;
+  }
+
+  public toggleDaylight(enable?: boolean): boolean {
+    this.isDaylight = enable !== undefined ? enable : !this.isDaylight;
+
+    if (this.daylightGroup) {
+      this.daylightGroup.visible = this.isDaylight;
+    }
+
+    if (this.ambientLight) {
+      this.ambientLight.intensity = this.isDaylight ? 0.75 : 0.35;
+    }
+
+    if (this.scene) {
+      this.scene.background = new THREE.Color(this.isDaylight ? 0x222834 : 0x090a0f);
+    }
+
+    if (this.wallLightSwitch) {
+      const rocker = this.wallLightSwitch.getObjectByName('switch-rocker');
+      if (rocker) {
+        rocker.rotation.z = this.isDaylight ? 0.09 : -0.09;
+      }
+      const indicator = this.wallLightSwitch.getObjectByName('switch-indicator') as THREE.Mesh;
+      if (indicator && indicator.material instanceof THREE.MeshStandardMaterial) {
+        if (this.isDaylight) {
+          indicator.material.color.setHex(0x00ff88);
+          indicator.material.emissive.setHex(0x00ff88);
+          indicator.material.emissiveIntensity = 2.0;
+        } else {
+          indicator.material.color.setHex(0xffaa00);
+          indicator.material.emissive.setHex(0xff8800);
+          indicator.material.emissiveIntensity = 1.5;
+        }
+      }
+    }
+
+    this.daylightCallbacks.forEach(cb => cb(this.isDaylight));
+    return this.isDaylight;
+  }
+
+  public onDaylightChange(callback: (isDaylight: boolean) => void): void {
+    this.daylightCallbacks.push(callback);
   }
 
   public start(): void {

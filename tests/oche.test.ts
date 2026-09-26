@@ -23,5 +23,8 @@ describe('Oche & Room Components', () => {
     expect(room.getObjectByName('wall-sconce-1')).toBeDefined();
     expect(room.getObjectByName('wall-sconce-2')).toBeDefined();
     expect(room.getObjectByName('wall-sconce-3')).toBeDefined();
+    expect(room.getObjectByName('wall-light-switch')).toBeDefined();
+    expect(room.getObjectByName('daylight-group')).toBeDefined();
+    expect(room.getObjectByName('ambient-light')).toBeDefined();
   });
 });

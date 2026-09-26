@@ -46,6 +46,9 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
         <button id="toggle-player" class="btn btn-toggle active" title="Toggle 3D player mannequin at the throw line">
           <span class="icon">🧍</span> Player Dummy
         </button>
+        <button id="toggle-light-mode" class="btn btn-toggle" title="Toggle room lighting (Evening Lounge / Bright Daylight)">
+          <span class="icon">💡</span> <span id="light-toggle-label">Daylight</span>
+        </button>
       </div>
     </div>
   `;
@@ -74,6 +77,26 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
     const isVisible = sceneManager.togglePlayerDummy();
     togglePlayerBtn.classList.toggle('active', isVisible);
   });
+
+  // Attach light mode toggle event (synced with 3D physical wall switch)
+  const toggleLightBtn = container.querySelector<HTMLButtonElement>('#toggle-light-mode')!;
+  const lightIcon = toggleLightBtn.querySelector<HTMLSpanElement>('.icon')!;
+  const lightLabel = toggleLightBtn.querySelector<HTMLSpanElement>('#light-toggle-label')!;
+
+  const updateLightUI = (isDaylight: boolean) => {
+    toggleLightBtn.classList.toggle('active', isDaylight);
+    lightIcon.textContent = isDaylight ? '☀️' : '💡';
+    lightLabel.textContent = isDaylight ? 'Daylight ON' : 'Daylight';
+    toggleLightBtn.title = isDaylight
+      ? 'Daylight is ON (Click to switch to Evening Lounge lighting)'
+      : 'Daylight is OFF (Click to switch to Bright Daylight)';
+  };
+
+  toggleLightBtn.addEventListener('click', () => {
+    sceneManager.toggleDaylight();
+  });
+
+  sceneManager.onDaylightChange(updateLightUI);
 
   return container;
 }
