@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { DARTS_DIMENSIONS } from '../constants/dartsDimensions';
 import { createDartboardTexture, createDartboardBumpMap } from './DartboardTexture';
+import { createSurroundTexture, createSurroundBumpMap } from './SurroundTexture';
 import { create3DSpiderGroup } from './SpiderWires';
 import { create3DNumberRingGroup } from './NumberRing';
 
@@ -80,38 +81,70 @@ export function createDartboardGroup(): THREE.Group {
   const numberRingGroup = create3DNumberRingGroup();
   group.add(numberRingGroup);
 
-  // 6. Wall Surround (solid 38mm thick EVA foam protection ring)
+  // 6. Wall Surround (high-depth matte black EVA foam ring with rounded bullnose bevel)
+  const bevel = 0.006; // 6mm rounded bullnose bevel
+  const outerR = DARTS_DIMENSIONS.SURROUND_OUTER_RADIUS_METERS - bevel;
+  const innerR = DARTS_DIMENSIONS.BOARD_RADIUS_METERS + bevel;
+
   const surroundShape = new THREE.Shape();
-  surroundShape.absarc(0, 0, DARTS_DIMENSIONS.SURROUND_OUTER_RADIUS_METERS, 0, Math.PI * 2, false);
+  surroundShape.absarc(0, 0, outerR, 0, Math.PI * 2, false);
   const surroundHole = new THREE.Path();
-  surroundHole.absarc(0, 0, DARTS_DIMENSIONS.BOARD_RADIUS_METERS, 0, Math.PI * 2, true);
+  surroundHole.absarc(0, 0, innerR, 0, Math.PI * 2, true);
   surroundShape.holes.push(surroundHole);
 
-  const surroundDepth = DARTS_DIMENSIONS.SURROUND_THICKNESS_METERS;
+  // Depth: extends from back wall (Z = -0.038) forward to Z = +0.006 (stands 6mm proud of board face)
+  const totalThickness = DARTS_DIMENSIONS.SURROUND_THICKNESS_METERS + 0.006; // 0.044m
+  const innerDepth = totalThickness - 2 * bevel; // 0.032m
   const extrudeSettings: THREE.ExtrudeGeometryOptions = {
-    depth: surroundDepth,
+    depth: innerDepth,
     bevelEnabled: true,
-    bevelSegments: 4,
+    bevelSegments: 6,
     steps: 1,
-    bevelSize: 0.003,
-    bevelThickness: 0.003,
-    curveSegments: 64
+    bevelSize: bevel,
+    bevelThickness: bevel,
+    curveSegments: 72
   };
   const surroundGeom = new THREE.ExtrudeGeometry(surroundShape, extrudeSettings);
-  // Center along Z so it sits flush with the board from back wall (Z = -0.038) to front face (Z = 0)
-  surroundGeom.translate(0, 0, -surroundDepth);
+  // Translate so back bevel touches back wall at Z = -0.038 and front face stands proud at Z = +0.006
+  surroundGeom.translate(0, 0, -DARTS_DIMENSIONS.SURROUND_THICKNESS_METERS + bevel);
 
-  const surroundMat = new THREE.MeshStandardMaterial({
-    color: 0x881313, // classic deep red matte EVA foam
-    roughness: 0.88,
-    metalness: 0.04
-  });
+  const surroundTexture = createSurroundTexture();
+  const surroundBump = createSurroundBumpMap();
+
+  const surroundMatParams: THREE.MeshStandardMaterialParameters = {
+    color: 0x18191d, // tournament matte black / anthracite EVA foam
+    roughness: 0.90, // soft velvety foam surface
+    metalness: 0.02
+  };
+  if (surroundTexture) surroundMatParams.map = surroundTexture;
+  if (surroundBump) {
+    surroundMatParams.bumpMap = surroundBump;
+    surroundMatParams.bumpScale = 0.0016;
+  }
+
+  const surroundMat = new THREE.MeshStandardMaterial(surroundMatParams);
   const surroundMesh = new THREE.Mesh(surroundGeom, surroundMat);
   surroundMesh.name = 'surround';
-  surroundMesh.position.set(0, 0, 0);
   surroundMesh.castShadow = true;
   surroundMesh.receiveShadow = true;
   group.add(surroundMesh);
+
+  // Inner recessed shadow ring between dartboard rim and surround
+  const innerShadowGeom = new THREE.TorusGeometry(
+    DARTS_DIMENSIONS.BOARD_RADIUS_METERS + 0.001,
+    0.002,
+    8,
+    72
+  );
+  const innerShadowMat = new THREE.MeshBasicMaterial({
+    color: 0x050507,
+    transparent: true,
+    opacity: 0.75
+  });
+  const innerShadowMesh = new THREE.Mesh(innerShadowGeom, innerShadowMat);
+  innerShadowMesh.name = 'surround-inner-shadow-ring';
+  innerShadowMesh.position.set(0, 0, 0.001);
+  group.add(innerShadowMesh);
 
   return group;
 }
