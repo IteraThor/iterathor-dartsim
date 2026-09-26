@@ -77,8 +77,8 @@ export class SceneManager {
         targetLook.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS, 0);
         break;
       case 'board':
-        // Close-up view of the dartboard face
-        targetPos.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS, 0.7);
+        // Close-up view of the dartboard face, filling the viewport
+        targetPos.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS, 0.42);
         targetLook.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS, 0);
         break;
       case 'side':
