@@ -81,8 +81,8 @@ export function createDartboardGroup(): THREE.Group {
   const numberRingGroup = create3DNumberRingGroup();
   group.add(numberRingGroup);
 
-  // 6. Wall Surround (high-depth matte black EVA foam ring with rounded bullnose bevel)
-  const bevel = 0.006; // 6mm rounded bullnose bevel
+  // 6. Wall Surround (flush with dartboard face Z = 0, extends back to wall Z = -0.038m)
+  const bevel = 0.003; // subtle 3mm soft edge bevel
   const outerR = DARTS_DIMENSIONS.SURROUND_OUTER_RADIUS_METERS - bevel;
   const innerR = DARTS_DIMENSIONS.BOARD_RADIUS_METERS + bevel;
 
@@ -92,21 +92,20 @@ export function createDartboardGroup(): THREE.Group {
   surroundHole.absarc(0, 0, innerR, 0, Math.PI * 2, true);
   surroundShape.holes.push(surroundHole);
 
-  // Depth: extends from back wall (Z = -0.038) forward to Z = +0.006 (stands 6mm proud of board face)
-  const totalThickness = DARTS_DIMENSIONS.SURROUND_THICKNESS_METERS + 0.006; // 0.044m
-  const innerDepth = totalThickness - 2 * bevel; // 0.032m
+  const surroundThickness = DARTS_DIMENSIONS.SURROUND_THICKNESS_METERS; // 0.038m (matching board thickness)
+  const innerDepth = surroundThickness - 2 * bevel; // 0.032m
   const extrudeSettings: THREE.ExtrudeGeometryOptions = {
     depth: innerDepth,
     bevelEnabled: true,
-    bevelSegments: 6,
+    bevelSegments: 4,
     steps: 1,
     bevelSize: bevel,
     bevelThickness: bevel,
     curveSegments: 72
   };
   const surroundGeom = new THREE.ExtrudeGeometry(surroundShape, extrudeSettings);
-  // Translate so back bevel touches back wall at Z = -0.038 and front face stands proud at Z = +0.006
-  surroundGeom.translate(0, 0, -DARTS_DIMENSIONS.SURROUND_THICKNESS_METERS + bevel);
+  // Translate so back touches back wall (Z = -0.038m) and front face is completely flush with dartboard (Z = 0.000m)
+  surroundGeom.translate(0, 0, -(innerDepth + bevel));
 
   const surroundTexture = createSurroundTexture();
   const surroundBump = createSurroundBumpMap();
@@ -132,7 +131,7 @@ export function createDartboardGroup(): THREE.Group {
   // Inner recessed shadow ring between dartboard rim and surround
   const innerShadowGeom = new THREE.TorusGeometry(
     DARTS_DIMENSIONS.BOARD_RADIUS_METERS + 0.001,
-    0.002,
+    0.0015,
     8,
     72
   );
@@ -143,7 +142,7 @@ export function createDartboardGroup(): THREE.Group {
   });
   const innerShadowMesh = new THREE.Mesh(innerShadowGeom, innerShadowMat);
   innerShadowMesh.name = 'surround-inner-shadow-ring';
-  innerShadowMesh.position.set(0, 0, 0.001);
+  innerShadowMesh.position.set(0, 0, 0.0003);
   group.add(innerShadowMesh);
 
   return group;
