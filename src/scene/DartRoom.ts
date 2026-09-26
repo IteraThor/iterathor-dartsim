@@ -77,46 +77,54 @@ export function createDartRoomGroup(): THREE.Group {
   crownMesh.receiveShadow = true;
   room.add(crownMesh);
 
-  // 4. Lighting Setup
-  // Ambient fill light
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+  // 4. Realistic Two-Source Lighting Setup
+  // Subtle indirect ambient bounce
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.22);
   room.add(ambientLight);
 
-  // Dartboard Accent Spotlight
-  const spotLight = new THREE.SpotLight(0xfff5e6, 2.8);
-  spotLight.position.set(0, 2.6, 0.7);
-  spotLight.target.position.set(0, 1.727, 0);
-  spotLight.angle = Math.PI / 3.2;
-  spotLight.penumbra = 0.4;
-  spotLight.castShadow = true;
-  spotLight.shadow.mapSize.width = 1024;
-  spotLight.shadow.mapSize.height = 1024;
-  room.add(spotLight);
-  room.add(spotLight.target);
+  // Fixture canister material for physical ceiling mounts
+  const fixtureMat = new THREE.MeshStandardMaterial({
+    color: 0x18181b,
+    roughness: 0.5,
+    metalness: 0.8
+  });
+  const fixtureGeom = new THREE.CylinderGeometry(0.06, 0.06, 0.08, 16);
 
-  // Warm Overhead Room Downlight (illuminates the hardwood floor and player area)
-  const roomDownlight = new THREE.PointLight(0xfff4e6, 2.2, 7.0);
-  roomDownlight.position.set(0, 2.7, 1.6);
-  roomDownlight.castShadow = true;
-  room.add(roomDownlight);
+  // SOURCE 1: Dartboard Task Spotlight (Ceiling mount angled down at board)
+  const boardSpot = new THREE.SpotLight(0xfff6eb, 3.4);
+  boardSpot.name = 'dartboard-spotlight';
+  boardSpot.position.set(0, 2.75, 0.65);
+  boardSpot.target.position.set(0, 1.727, 0);
+  boardSpot.angle = Math.PI / 3.4;
+  boardSpot.penumbra = 0.45;
+  boardSpot.castShadow = true;
+  boardSpot.shadow.mapSize.width = 2048;
+  boardSpot.shadow.mapSize.height = 2048;
+  boardSpot.shadow.bias = -0.0001;
+  room.add(boardSpot);
+  room.add(boardSpot.target);
 
-  // Player area directional fill light
-  const playerLight = new THREE.DirectionalLight(0xe0e7ff, 0.6);
-  playerLight.position.set(2, 3, 3.5);
-  room.add(playerLight);
+  const boardFixture = new THREE.Mesh(fixtureGeom, fixtureMat);
+  boardFixture.position.set(0, 2.78, 0.65);
+  room.add(boardFixture);
 
-  // Tournament 360 Light Ring (Target Corona / Winmau Plasma style)
-  const ringLightTop = new THREE.PointLight(0xfff8ee, 1.4, 2.5);
-  ringLightTop.position.set(0, 1.727 + 0.38, 0.22);
-  room.add(ringLightTop);
+  // SOURCE 2: Player Ceiling Light (Mounted overhead close to player at throw line)
+  const playerCeilingLight = new THREE.SpotLight(0xfff2e0, 2.5);
+  playerCeilingLight.name = 'player-ceiling-light';
+  playerCeilingLight.position.set(0, 2.75, 2.65);
+  playerCeilingLight.target.position.set(0, 0, 2.37);
+  playerCeilingLight.angle = Math.PI / 2.6;
+  playerCeilingLight.penumbra = 0.55;
+  playerCeilingLight.castShadow = true;
+  playerCeilingLight.shadow.mapSize.width = 1024;
+  playerCeilingLight.shadow.mapSize.height = 1024;
+  playerCeilingLight.shadow.bias = -0.0001;
+  room.add(playerCeilingLight);
+  room.add(playerCeilingLight.target);
 
-  const ringLightLeft = new THREE.PointLight(0xfff8ee, 1.2, 2.5);
-  ringLightLeft.position.set(-0.38, 1.727 - 0.1, 0.22);
-  room.add(ringLightLeft);
-
-  const ringLightRight = new THREE.PointLight(0xfff8ee, 1.2, 2.5);
-  ringLightRight.position.set(0.38, 1.727 - 0.1, 0.22);
-  room.add(ringLightRight);
+  const playerFixture = new THREE.Mesh(fixtureGeom, fixtureMat);
+  playerFixture.position.set(0, 2.78, 2.65);
+  room.add(playerFixture);
 
   return room;
 }
