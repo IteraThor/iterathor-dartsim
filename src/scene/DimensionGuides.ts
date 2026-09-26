@@ -38,7 +38,7 @@ export function createDimensionGuidesGroup(): THREE.Group {
   vertLine.name = 'dim-vertical-height';
   group.add(vertLine);
 
-  const vertLabel = createTextBillboard('1.73 m (5\' 8") Height', '#facc15');
+  const vertLabel = createTextBillboard('1.73 m Height', '#facc15');
   vertLabel.position.set(-0.55, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS / 2, 0);
   group.add(vertLabel);
 
@@ -54,7 +54,7 @@ export function createDimensionGuidesGroup(): THREE.Group {
   horizLine.name = 'dim-horizontal-distance';
   group.add(horizLine);
 
-  const horizLabel = createTextBillboard('2.37 m (7\' 9¼") Throw Distance', '#38bdf8');
+  const horizLabel = createTextBillboard('2.37 m Throw Distance', '#38bdf8');
   horizLabel.position.set(0.65, 0.16, DARTS_DIMENSIONS.OCHE_DISTANCE_METERS / 2);
   group.add(horizLabel);
 
@@ -70,7 +70,7 @@ export function createDimensionGuidesGroup(): THREE.Group {
   group.add(diagLine);
 
   const diagDistance = calculateDiagonalOcheDistance();
-  const diagLabel = createTextBillboard(`${diagDistance.toFixed(2)} m (9\' 7½") Diagonal`, '#f97316');
+  const diagLabel = createTextBillboard(`${diagDistance.toFixed(2)} m Diagonal`, '#f97316');
   diagLabel.position.set(
     0.16,
     DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS / 2 + 0.1,

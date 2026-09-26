@@ -3,10 +3,10 @@
  * Standard units in 3D scene: 1 unit = 1.0 meter
  */
 export const DARTS_DIMENSIONS = {
-  // Height from floor level to bullseye center: 1.727m (5ft 8in)
+  // Height from floor level to bullseye center: 1.727m
   BULLSEYE_HEIGHT_METERS: 1.727,
 
-  // Horizontal distance from front face of board to front edge of oche: 2.37m (7ft 9.25in)
+  // Horizontal distance from front face of board to front edge of oche: 2.370m
   OCHE_DISTANCE_METERS: 2.370,
 
   // Dartboard body
@@ -28,7 +28,7 @@ export const DARTS_DIMENSIONS = {
   SURROUND_THICKNESS_METERS: 0.038,
 
   // Raised Oche Bar
-  OCHE_BAR_HEIGHT_METERS: 0.038, // 38mm (1.5 in)
+  OCHE_BAR_HEIGHT_METERS: 0.038, // 38mm
   OCHE_BAR_WIDTH_METERS: 0.600,  // 600mm
   OCHE_BAR_DEPTH_METERS: 0.050,  // 50mm
 
