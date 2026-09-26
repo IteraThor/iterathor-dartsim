@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { DARTS_DIMENSIONS } from '../constants/dartsDimensions';
-import { createDartboardTexture } from './DartboardTexture';
+import { createDartboardTexture, createDartboardBumpMap } from './DartboardTexture';
+import { create3DSpiderGroup } from './SpiderWires';
+import { create3DNumberRingGroup } from './NumberRing';
 
 export function createDartboardGroup(): THREE.Group {
   const group = new THREE.Group();
@@ -10,9 +12,9 @@ export function createDartboardGroup(): THREE.Group {
   group.position.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS, 0);
 
   const texture = createDartboardTexture();
+  const bumpMap = createDartboardBumpMap();
 
   // 1. Board Body Cylinder
-  // Cylinder oriented along Z axis
   const boardGeom = new THREE.CylinderGeometry(
     DARTS_DIMENSIONS.BOARD_RADIUS_METERS,
     DARTS_DIMENSIONS.BOARD_RADIUS_METERS,
@@ -21,13 +23,21 @@ export function createDartboardGroup(): THREE.Group {
   );
   boardGeom.rotateX(Math.PI / 2);
 
-  const sideMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+  const sideMat = new THREE.MeshStandardMaterial({
+    color: 0x18181b,
+    roughness: 0.7,
+    metalness: 0.2
+  });
+
   const faceMat = new THREE.MeshStandardMaterial({
     map: texture,
-    roughness: 0.65,
-    metalness: 0.08
+    bumpMap: bumpMap,
+    bumpScale: 0.0005,
+    roughness: 0.82,
+    metalness: 0.04
   });
-  const backMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.9 });
+
+  const backMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.95 });
 
   const boardMesh = new THREE.Mesh(boardGeom, [sideMat, faceMat, backMat]);
   boardMesh.name = 'board-cylinder';
@@ -37,14 +47,40 @@ export function createDartboardGroup(): THREE.Group {
   boardMesh.receiveShadow = true;
   group.add(boardMesh);
 
-  // 2. Board Face planar disc for razor-sharp rendering without z-fighting
+  // 2. Board Face planar disc for razor-sharp rendering
   const faceGeom = new THREE.CircleGeometry(DARTS_DIMENSIONS.BOARD_RADIUS_METERS, 64);
   const faceMesh = new THREE.Mesh(faceGeom, faceMat);
   faceMesh.name = 'board-face';
   faceMesh.position.set(0, 0, 0.0005);
+  faceMesh.receiveShadow = true;
   group.add(faceMesh);
 
-  // 3. Wall Surround (solid 38mm thick EVA foam protection ring)
+  // 3. Authentic Brushed Steel Outer Clamping Rim Band
+  const rimGeom = new THREE.TorusGeometry(
+    DARTS_DIMENSIONS.BOARD_RADIUS_METERS,
+    0.0015,
+    8,
+    72
+  );
+  const rimMat = new THREE.MeshStandardMaterial({
+    color: 0x71717a,
+    metalness: 0.85,
+    roughness: 0.3
+  });
+  const rimMesh = new THREE.Mesh(rimGeom, rimMat);
+  rimMesh.name = 'board-rim-band';
+  rimMesh.position.set(0, 0, 0.0008);
+  group.add(rimMesh);
+
+  // 4. Physical 3D Metallic Wire Spider (Rings + Radial Blades)
+  const spiderGroup = create3DSpiderGroup();
+  group.add(spiderGroup);
+
+  // 5. Physical 3D Floating Number Ring & Tournament Numerals
+  const numberRingGroup = create3DNumberRingGroup();
+  group.add(numberRingGroup);
+
+  // 6. Wall Surround (solid 38mm thick EVA foam protection ring)
   const surroundShape = new THREE.Shape();
   surroundShape.absarc(0, 0, DARTS_DIMENSIONS.SURROUND_OUTER_RADIUS_METERS, 0, Math.PI * 2, false);
   const surroundHole = new THREE.Path();

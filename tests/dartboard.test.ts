@@ -11,11 +11,14 @@ describe('Dartboard 3D Component', () => {
     expect(dartboard.position.z).toBeCloseTo(0, 3);
   });
 
-  it('contains board cylinder, face mesh, and surround', () => {
+  it('contains board cylinder, face mesh, surround, wire spider, and number ring', () => {
     const dartboard = createDartboardGroup();
     const childNames = dartboard.children.map(c => c.name);
     expect(childNames).toContain('board-cylinder');
     expect(childNames).toContain('board-face');
     expect(childNames).toContain('surround');
+    expect(childNames).toContain('wire-spider');
+    expect(childNames).toContain('number-ring');
+    expect(childNames).toContain('board-rim-band');
   });
 });

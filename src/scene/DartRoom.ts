@@ -63,5 +63,19 @@ export function createDartRoomGroup(): THREE.Group {
   playerLight.position.set(2, 3, 3.5);
   room.add(playerLight);
 
+  // Tournament 360 Light Ring (Target Corona / Winmau Plasma style)
+  // Provides shadowless illumination and crisp metallic glints on 3D wires
+  const ringLightTop = new THREE.PointLight(0xfff8ee, 1.4, 2.5);
+  ringLightTop.position.set(0, 1.727 + 0.38, 0.22);
+  room.add(ringLightTop);
+
+  const ringLightLeft = new THREE.PointLight(0xfff8ee, 1.2, 2.5);
+  ringLightLeft.position.set(-0.38, 1.727 - 0.1, 0.22);
+  room.add(ringLightLeft);
+
+  const ringLightRight = new THREE.PointLight(0xfff8ee, 1.2, 2.5);
+  ringLightRight.position.set(0.38, 1.727 - 0.1, 0.22);
+  room.add(ringLightRight);
+
   return room;
 }
