@@ -43,6 +43,9 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
         <button id="toggle-dimensions" class="btn btn-toggle active" title="Toggle regulation measurement lines">
           <span class="icon">📏</span> Dimension Guides
         </button>
+        <button id="toggle-player" class="btn btn-toggle active" title="Toggle 3D player mannequin at the throw line">
+          <span class="icon">🧍</span> Player Dummy
+        </button>
       </div>
     </div>
   `;
@@ -63,6 +66,13 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
   toggleDimBtn.addEventListener('click', () => {
     const isVisible = sceneManager.toggleDimensions();
     toggleDimBtn.classList.toggle('active', isVisible);
+  });
+
+  // Attach player dummy toggle event
+  const togglePlayerBtn = container.querySelector<HTMLButtonElement>('#toggle-player')!;
+  togglePlayerBtn.addEventListener('click', () => {
+    const isVisible = sceneManager.togglePlayerDummy();
+    togglePlayerBtn.classList.toggle('active', isVisible);
   });
 
   return container;
