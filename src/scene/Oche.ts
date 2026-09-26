@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { DARTS_DIMENSIONS } from '../constants/dartsDimensions';
+import { createRaisedOcheBar } from './OcheBar';
 
 export function createOcheGroup(): THREE.Group {
   const group = new THREE.Group();
@@ -102,29 +103,16 @@ export function createOcheGroup(): THREE.Group {
   matMesh.receiveShadow = true;
   group.add(matMesh);
 
-  // 2. Raised Wooden Oche Bar (Toe Line)
-  // Regulation: 38mm high, 600mm wide, 50mm deep
-  const barGeom = new THREE.BoxGeometry(
-    DARTS_DIMENSIONS.OCHE_BAR_WIDTH_METERS,
-    DARTS_DIMENSIONS.OCHE_BAR_HEIGHT_METERS,
-    DARTS_DIMENSIONS.OCHE_BAR_DEPTH_METERS
-  );
-  const barMat = new THREE.MeshStandardMaterial({
-    color: 0xc87d32, // rich timber finish
-    roughness: 0.45,
-    metalness: 0.1
-  });
-  const barMesh = new THREE.Mesh(barGeom, barMat);
-  barMesh.name = 'oche-raised-bar';
-  // Front edge positioned at exactly Z = 2.37m
-  barMesh.position.set(
+  // 2. High-Depth Raised Timber Oche Bar Assembly (Regulation Toe Line)
+  // Regulation: 38mm high, 600mm wide, 50mm deep with beveled timber, metal brackets & brass plate
+  const barGroup = createRaisedOcheBar();
+  // Front edge positioned at exactly Z = 2.37m (bar center = 2.37m + 0.050m/2)
+  barGroup.position.set(
     0,
     DARTS_DIMENSIONS.OCHE_BAR_HEIGHT_METERS / 2 + 0.002,
     DARTS_DIMENSIONS.OCHE_DISTANCE_METERS + DARTS_DIMENSIONS.OCHE_BAR_DEPTH_METERS / 2
   );
-  barMesh.castShadow = true;
-  barMesh.receiveShadow = true;
-  group.add(barMesh);
+  group.add(barGroup);
 
   return group;
 }
