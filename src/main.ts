@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const hudElement = setupViewControls(sceneManager);
   appElement.appendChild(hudElement);
 
-  // Set default view to player oche perspective
-  sceneManager.setViewPreset('oche', false);
+  // Set default view to 3D Orbit overview showing room, floor, and board
+  sceneManager.setViewPreset('isometric', false);
   sceneManager.start();
 });
