@@ -13,10 +13,12 @@ describe('Oche & Room Components', () => {
     expect(mat!.position.z).toBeCloseTo(DARTS_DIMENSIONS.MAT_LENGTH_METERS / 2, 3);
   });
 
-  it('creates dart room group with floor, feature wall, and lighting', () => {
+  it('creates dart room group with floor, feature wall, right side wall, and lighting', () => {
     const room = createDartRoomGroup();
     expect(room).toBeInstanceOf(THREE.Group);
     expect(room.getObjectByName('floor')).toBeDefined();
     expect(room.getObjectByName('back-wall')).toBeDefined();
+    expect(room.getObjectByName('right-wall')).toBeDefined();
+    expect(room.getObjectByName('side-baseboard')).toBeDefined();
   });
 });
