@@ -4,6 +4,7 @@ import { createDartRoomGroup } from './DartRoom';
 import { createDartboardGroup } from './Dartboard';
 import { createOcheGroup } from './Oche';
 import { createDimensionGuidesGroup } from './DimensionGuides';
+import { createPlayerDummyGroup } from './PlayerDummy';
 import { DARTS_DIMENSIONS } from '../constants/dartsDimensions';
 
 export class SceneManager {
@@ -12,6 +13,7 @@ export class SceneManager {
   public camera: THREE.PerspectiveCamera;
   public controls: OrbitControls;
   public dimensionGuides: THREE.Group;
+  public playerDummy: THREE.Group;
 
   private isRunning = false;
   private animationFrameId = 0;
@@ -61,6 +63,9 @@ export class SceneManager {
 
     this.dimensionGuides = createDimensionGuidesGroup();
     this.scene.add(this.dimensionGuides);
+
+    this.playerDummy = createPlayerDummyGroup();
+    this.scene.add(this.playerDummy);
 
     // 6. Resize listener
     window.addEventListener('resize', this.onWindowResize);
@@ -118,6 +123,11 @@ export class SceneManager {
   public toggleDimensions(visible?: boolean): boolean {
     this.dimensionGuides.visible = visible !== undefined ? visible : !this.dimensionGuides.visible;
     return this.dimensionGuides.visible;
+  }
+
+  public togglePlayerDummy(visible?: boolean): boolean {
+    this.playerDummy.visible = visible !== undefined ? visible : !this.playerDummy.visible;
+    return this.playerDummy.visible;
   }
 
   public start(): void {
