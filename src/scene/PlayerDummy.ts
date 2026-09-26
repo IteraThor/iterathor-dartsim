@@ -194,7 +194,7 @@ export function createPlayerDummyGroup(): THREE.Group {
   neckMesh.position.set(0.0, 1.50, spineZ);
   dummy.add(neckMesh);
 
-  // Head (Cranium top reaches exactly 1.78m)
+  // Head (Smooth anatomical cranium reaching exactly 1.78m)
   const headGroup = new THREE.Group();
   headGroup.name = 'dummy-head';
 
@@ -203,13 +203,6 @@ export function createPlayerDummyGroup(): THREE.Group {
   headMesh.position.copy(headCenter);
   headMesh.castShadow = true;
   headGroup.add(headMesh);
-
-  // Eye visor bar looking straight at the board
-  const browGeom = new THREE.BoxGeometry(0.11, 0.014, 0.04);
-  const browMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-  const browMesh = new THREE.Mesh(browGeom, browMat);
-  browMesh.position.set(headCenter.x, 1.67, headCenter.z - 0.075);
-  headGroup.add(browMesh);
 
   dummy.add(headGroup);
 
