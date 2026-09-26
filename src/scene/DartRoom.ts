@@ -1,37 +1,54 @@
 import * as THREE from 'three';
+import { createWoodFloorTexture, createWoodFloorBumpMap } from './FloorTexture';
 
 export function createDartRoomGroup(): THREE.Group {
   const room = new THREE.Group();
   room.name = 'dart-room';
 
-  // Room Dimensions: Width = 5.0m, Height = 3.2m, Depth = 6.0m
-  const roomWidth = 5.0;
+  // Room Dimensions: Width = 5.5m, Height = 3.2m, Depth = 6.5m
+  const roomWidth = 5.5;
   const roomHeight = 3.2;
-  const roomDepth = 6.0;
+  const roomDepth = 6.5;
 
-  // 1. Floor
+  // 1. Realistic Hardwood Floor
   const floorGeom = new THREE.PlaneGeometry(roomWidth, roomDepth);
   floorGeom.rotateX(-Math.PI / 2);
+
+  const floorTexture = createWoodFloorTexture();
+  const floorBump = createWoodFloorBumpMap();
+
   const floorMat = new THREE.MeshStandardMaterial({
-    color: 0x181a20, // dark studio floor
-    roughness: 0.75,
-    metalness: 0.12
+    map: floorTexture,
+    bumpMap: floorBump,
+    bumpScale: 0.001,
+    roughness: 0.38, // warm satin varnish finish
+    metalness: 0.06
   });
   const floorMesh = new THREE.Mesh(floorGeom, floorMat);
   floorMesh.name = 'floor';
-  floorMesh.position.set(0, 0, roomDepth / 2 - 1.0);
+  // Position so floor extends from back wall (Z = -0.038) forward to Z = 6.4m
+  floorMesh.position.set(0, 0, roomDepth / 2 - 0.038);
   floorMesh.receiveShadow = true;
   room.add(floorMesh);
 
-  // Floor grid for spatial reference (subtle dark grid)
-  const gridHelper = new THREE.GridHelper(roomDepth, 24, 0x333846, 0x222630);
-  gridHelper.position.set(0, 0.001, roomDepth / 2 - 1.0);
-  room.add(gridHelper);
+  // 2. Baseboard / Skirting Trim along the bottom of the wall
+  const baseboardGeom = new THREE.BoxGeometry(roomWidth, 0.09, 0.02);
+  const baseboardMat = new THREE.MeshStandardMaterial({
+    color: 0x241d18, // matching dark wood skirting
+    roughness: 0.5,
+    metalness: 0.1
+  });
+  const baseboardMesh = new THREE.Mesh(baseboardGeom, baseboardMat);
+  baseboardMesh.name = 'baseboard';
+  baseboardMesh.position.set(0, 0.045, -0.028);
+  baseboardMesh.receiveShadow = true;
+  baseboardMesh.castShadow = true;
+  room.add(baseboardMesh);
 
-  // 2. Feature Wall behind dartboard (Z = -0.038m)
+  // 3. Feature Wall behind dartboard (Z = -0.038m)
   const wallGeom = new THREE.PlaneGeometry(roomWidth, roomHeight);
   const wallMat = new THREE.MeshStandardMaterial({
-    color: 0x0f1115, // deep matte charcoal
+    color: 0x111318, // deep architectural charcoal matte wall
     roughness: 0.92,
     metalness: 0.05
   });
@@ -41,14 +58,14 @@ export function createDartRoomGroup(): THREE.Group {
   wallMesh.receiveShadow = true;
   room.add(wallMesh);
 
-  // 3. Lighting Setup
+  // 4. Lighting Setup
   // Ambient fill light
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
   room.add(ambientLight);
 
-  // Dartboard Accent Spotlight (simulates modern surround ring lighting / overhead dartboard lights)
+  // Dartboard Accent Spotlight
   const spotLight = new THREE.SpotLight(0xfff5e6, 2.8);
-  spotLight.position.set(0, 2.5, 0.7);
+  spotLight.position.set(0, 2.6, 0.7);
   spotLight.target.position.set(0, 1.727, 0);
   spotLight.angle = Math.PI / 3.2;
   spotLight.penumbra = 0.4;
@@ -58,13 +75,18 @@ export function createDartRoomGroup(): THREE.Group {
   room.add(spotLight);
   room.add(spotLight.target);
 
+  // Warm Overhead Room Downlight (illuminates the hardwood floor and player area)
+  const roomDownlight = new THREE.PointLight(0xfff4e6, 2.2, 7.0);
+  roomDownlight.position.set(0, 2.7, 1.6);
+  roomDownlight.castShadow = true;
+  room.add(roomDownlight);
+
   // Player area directional fill light
-  const playerLight = new THREE.DirectionalLight(0xe0e7ff, 0.75);
+  const playerLight = new THREE.DirectionalLight(0xe0e7ff, 0.6);
   playerLight.position.set(2, 3, 3.5);
   room.add(playerLight);
 
   // Tournament 360 Light Ring (Target Corona / Winmau Plasma style)
-  // Provides shadowless illumination and crisp metallic glints on 3D wires
   const ringLightTop = new THREE.PointLight(0xfff8ee, 1.4, 2.5);
   ringLightTop.position.set(0, 1.727 + 0.38, 0.22);
   room.add(ringLightTop);

@@ -32,11 +32,11 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
     <div class="hud-bottom-bar">
       <div class="view-preset-group glass-card">
         <span class="group-label">Camera Presets:</span>
-        <button class="btn btn-preset active" data-preset="oche" title="Player eye-level view at the oche">🎯 Player Oche</button>
+        <button class="btn btn-preset" data-preset="oche" title="Player eye-level view at the oche">🎯 Player Oche</button>
         <button class="btn btn-preset" data-preset="board" title="Close-up board perspective">Board Close-up</button>
         <button class="btn btn-preset" data-preset="side" title="Side elevation view showing throw distance">Side Elevation</button>
         <button class="btn btn-preset" data-preset="top" title="Top-down floor plan view">Top-Down</button>
-        <button class="btn btn-preset" data-preset="isometric" title="Interactive free 3D orbit view">3D Orbit</button>
+        <button class="btn btn-preset active" data-preset="isometric" title="Interactive free 3D orbit view">3D Orbit</button>
       </div>
 
       <div class="toggle-group glass-card">
