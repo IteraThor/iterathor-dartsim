@@ -13,41 +13,84 @@ export function createOcheGroup(): THREE.Group {
   matGeom.rotateX(-Math.PI / 2);
 
   let matTexture: THREE.Texture | null = null;
+  let matBumpTexture: THREE.Texture | null = null;
   if (typeof document !== 'undefined') {
     const matCanvas = document.createElement('canvas');
     matCanvas.width = 512;
     matCanvas.height = 2048;
     const ctx = matCanvas.getContext('2d');
-    if (ctx) {
-      ctx.fillStyle = '#1c1c22';
+
+    const bumpCanvas = document.createElement('canvas');
+    bumpCanvas.width = 512;
+    bumpCanvas.height = 2048;
+    const bCtx = bumpCanvas.getContext('2d');
+
+    if (ctx && bCtx) {
+      // Base vulcanized rubber color (matte charcoal)
+      ctx.fillStyle = '#1c1d22';
       ctx.fillRect(0, 0, 512, 2048);
 
-      // Gold border lines
-      ctx.strokeStyle = '#e5a521';
+      bCtx.fillStyle = '#808080';
+      bCtx.fillRect(0, 0, 512, 2048);
+
+      // Fine horizontal anti-slip micro-ribs
+      for (let y = 16; y < 2032; y += 8) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.14)';
+        ctx.fillRect(16, y, 480, 3);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.025)';
+        ctx.fillRect(16, y + 3, 480, 2);
+
+        bCtx.fillStyle = '#757575';
+        bCtx.fillRect(16, y, 480, 3);
+        bCtx.fillStyle = '#8b8b8b';
+        bCtx.fillRect(16, y + 3, 480, 2);
+      }
+
+      // Realistic dark rubber beveled perimeter edge (no glowing orange lines!)
+      // Outer bevel shadow
+      ctx.strokeStyle = '#111215';
       ctx.lineWidth = 10;
+      ctx.strokeRect(5, 5, 502, 2038);
+
+      bCtx.strokeStyle = '#606060';
+      bCtx.lineWidth = 10;
+      bCtx.strokeRect(5, 5, 502, 2038);
+
+      // Inner subtle rim transition
+      ctx.strokeStyle = '#272930';
+      ctx.lineWidth = 3;
       ctx.strokeRect(12, 12, 488, 2024);
 
+      bCtx.strokeStyle = '#909090';
+      bCtx.lineWidth = 3;
+      bCtx.strokeRect(12, 12, 488, 2024);
 
-      // Toe line indicator
-      ctx.strokeStyle = '#e52521';
-      ctx.lineWidth = 14;
+      // Regulation toe line indicator at 2.37m (Y=1520), muted matte finish
+      ctx.strokeStyle = '#8f2323'; // muted deep red, painted rubber look
+      ctx.lineWidth = 8;
       ctx.beginPath();
-      ctx.moveTo(30, 1520);
-      ctx.lineTo(482, 1520);
+      ctx.moveTo(24, 1520);
+      ctx.lineTo(488, 1520);
       ctx.stroke();
 
       matTexture = new THREE.CanvasTexture(matCanvas);
       matTexture.colorSpace = THREE.SRGBColorSpace;
+
+      matBumpTexture = new THREE.CanvasTexture(bumpCanvas);
     }
   }
 
   const matParams: THREE.MeshStandardMaterialParameters = {
-    color: matTexture ? 0xffffff : 0x1c1c22,
-    roughness: 0.85,
-    metalness: 0.1
+    color: matTexture ? 0xffffff : 0x1c1d22,
+    roughness: 0.94,
+    metalness: 0.0
   };
   if (matTexture) {
     matParams.map = matTexture;
+  }
+  if (matBumpTexture) {
+    matParams.bumpMap = matBumpTexture;
+    matParams.bumpScale = 0.0012;
   }
 
   const matMaterial = new THREE.MeshStandardMaterial(matParams);
