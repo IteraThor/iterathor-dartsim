@@ -44,21 +44,37 @@ export function createDartboardGroup(): THREE.Group {
   faceMesh.position.set(0, 0, 0.0005);
   group.add(faceMesh);
 
-  // 3. Wall Surround (EVA foam protection ring)
-  const surroundGeom = new THREE.RingGeometry(
-    DARTS_DIMENSIONS.BOARD_RADIUS_METERS,
-    DARTS_DIMENSIONS.SURROUND_OUTER_RADIUS_METERS,
-    64
-  );
+  // 3. Wall Surround (solid 38mm thick EVA foam protection ring)
+  const surroundShape = new THREE.Shape();
+  surroundShape.absarc(0, 0, DARTS_DIMENSIONS.SURROUND_OUTER_RADIUS_METERS, 0, Math.PI * 2, false);
+  const surroundHole = new THREE.Path();
+  surroundHole.absarc(0, 0, DARTS_DIMENSIONS.BOARD_RADIUS_METERS, 0, Math.PI * 2, true);
+  surroundShape.holes.push(surroundHole);
+
+  const surroundDepth = DARTS_DIMENSIONS.SURROUND_THICKNESS_METERS;
+  const extrudeSettings: THREE.ExtrudeGeometryOptions = {
+    depth: surroundDepth,
+    bevelEnabled: true,
+    bevelSegments: 4,
+    steps: 1,
+    bevelSize: 0.003,
+    bevelThickness: 0.003,
+    curveSegments: 64
+  };
+  const surroundGeom = new THREE.ExtrudeGeometry(surroundShape, extrudeSettings);
+  // Center along Z so it sits flush with the board from back wall (Z = -0.038) to front face (Z = 0)
+  surroundGeom.translate(0, 0, -surroundDepth);
+
   const surroundMat = new THREE.MeshStandardMaterial({
-    color: 0x881313, // classic deep red surround
-    roughness: 0.85,
-    metalness: 0.05,
-    side: THREE.DoubleSide
+    color: 0x881313, // classic deep red matte EVA foam
+    roughness: 0.88,
+    metalness: 0.04
   });
   const surroundMesh = new THREE.Mesh(surroundGeom, surroundMat);
   surroundMesh.name = 'surround';
-  surroundMesh.position.set(0, 0, -0.001);
+  surroundMesh.position.set(0, 0, 0);
+  surroundMesh.castShadow = true;
+  surroundMesh.receiveShadow = true;
   group.add(surroundMesh);
 
   return group;
