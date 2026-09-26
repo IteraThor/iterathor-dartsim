@@ -27,16 +27,6 @@ export function createOcheGroup(): THREE.Group {
       ctx.lineWidth = 10;
       ctx.strokeRect(12, 12, 488, 2024);
 
-      // Distance markers along the runner
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 36px Arial, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('WINMAU / REGULATION DARTS RUNNER', 256, 400);
-
-      // 2.37m marker
-      ctx.fillStyle = '#e5a521';
-      ctx.font = 'bold 44px Arial, sans-serif';
-      ctx.fillText('2.37 m  /  7\' 9¼"', 256, 1450);
 
       // Toe line indicator
       ctx.strokeStyle = '#e52521';
