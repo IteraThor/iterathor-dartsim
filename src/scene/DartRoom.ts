@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createWoodFloorTexture, createWoodFloorBumpMap } from './FloorTexture';
+import { createWallTexture, createWallBumpMap } from './WallTexture';
 
 export function createDartRoomGroup(): THREE.Group {
   const room = new THREE.Group();
@@ -46,17 +47,35 @@ export function createDartRoomGroup(): THREE.Group {
   room.add(baseboardMesh);
 
   // 3. Feature Wall behind dartboard (Z = -0.038m)
+  const wallTexture = createWallTexture();
+  const wallBump = createWallBumpMap();
+
   const wallGeom = new THREE.PlaneGeometry(roomWidth, roomHeight);
   const wallMat = new THREE.MeshStandardMaterial({
-    color: 0x111318, // deep architectural charcoal matte wall
-    roughness: 0.92,
-    metalness: 0.05
+    map: wallTexture,
+    bumpMap: wallBump,
+    bumpScale: 0.0018,
+    roughness: 0.82,
+    metalness: 0.04
   });
   const wallMesh = new THREE.Mesh(wallGeom, wallMat);
   wallMesh.name = 'back-wall';
   wallMesh.position.set(0, roomHeight / 2, -0.038);
   wallMesh.receiveShadow = true;
   room.add(wallMesh);
+
+  // 4. Ceiling Crown Trim along the top of the wall
+  const crownGeom = new THREE.BoxGeometry(roomWidth, 0.08, 0.03);
+  const crownMat = new THREE.MeshStandardMaterial({
+    color: 0x181a20,
+    roughness: 0.6,
+    metalness: 0.08
+  });
+  const crownMesh = new THREE.Mesh(crownGeom, crownMat);
+  crownMesh.name = 'crown-trim';
+  crownMesh.position.set(0, roomHeight - 0.04, -0.028);
+  crownMesh.receiveShadow = true;
+  room.add(crownMesh);
 
   // 4. Lighting Setup
   // Ambient fill light
