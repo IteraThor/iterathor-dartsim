@@ -20,5 +20,8 @@ describe('Oche & Room Components', () => {
     expect(room.getObjectByName('back-wall')).toBeDefined();
     expect(room.getObjectByName('right-wall')).toBeDefined();
     expect(room.getObjectByName('side-baseboard')).toBeDefined();
+    expect(room.getObjectByName('wall-sconce-1')).toBeDefined();
+    expect(room.getObjectByName('wall-sconce-2')).toBeDefined();
+    expect(room.getObjectByName('wall-sconce-3')).toBeDefined();
   });
 });

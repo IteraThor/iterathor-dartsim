@@ -118,6 +118,16 @@ export function createDartRoomGroup(): THREE.Group {
   sideCrownMesh.receiveShadow = true;
   room.add(sideCrownMesh);
 
+  // 6. Decorative Wall-Mounted Lights on Right Wall (Sconces with up/down wash)
+  const sconceZPositions = [1.15, 2.75, 4.35];
+  const sconceHeight = 1.95;
+  const wallX = roomWidth / 2; // 2.75m
+
+  sconceZPositions.forEach((z, idx) => {
+    const sconceGroup = createWallSconce(wallX, sconceHeight, z, idx + 1);
+    room.add(sconceGroup);
+  });
+
   // 4. Realistic Two-Source Lighting Setup
   // Indirect ambient bounce
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
@@ -169,4 +179,109 @@ export function createDartRoomGroup(): THREE.Group {
   room.add(playerFixture);
 
   return room;
+}
+
+/**
+ * Creates an architectural wall sconce fixture with brushed brass accents,
+ * emissive diffuser caps, and warm up/down light wash along the wall surface.
+ */
+function createWallSconce(wallX: number, y: number, z: number, id: number): THREE.Group {
+  const sconce = new THREE.Group();
+  sconce.name = `wall-sconce-${id}`;
+
+  const fixtureMat = new THREE.MeshStandardMaterial({
+    color: 0x141418, // sleek matte graphite architectural metal
+    roughness: 0.35,
+    metalness: 0.85
+  });
+
+  const brassTrimMat = new THREE.MeshStandardMaterial({
+    color: 0xc89b53, // brushed warm brass accent rings
+    roughness: 0.25,
+    metalness: 0.90
+  });
+
+  const lensMat = new THREE.MeshStandardMaterial({
+    color: 0xfff0d8,
+    emissive: 0xffc678,
+    emissiveIntensity: 2.2,
+    roughness: 0.2,
+    metalness: 0.1
+  });
+
+  // 1. Wall Mounting Baseplate (flush against wall at wallX = 2.75)
+  const baseplateGeom = new THREE.BoxGeometry(0.012, 0.16, 0.07);
+  const baseplate = new THREE.Mesh(baseplateGeom, fixtureMat);
+  baseplate.name = `sconce-baseplate-${id}`;
+  baseplate.position.set(wallX - 0.006, y, z);
+  baseplate.castShadow = true;
+  sconce.add(baseplate);
+
+  // 2. Horizontal standoff bracket arm
+  const armGeom = new THREE.BoxGeometry(0.035, 0.02, 0.025);
+  const arm = new THREE.Mesh(armGeom, fixtureMat);
+  arm.position.set(wallX - 0.025, y, z);
+  sconce.add(arm);
+
+  // 3. Main Sconce Cylinder Body
+  const cylinderRadius = 0.032;
+  const cylinderHeight = 0.22;
+  const cylinderGeom = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 24);
+  const body = new THREE.Mesh(cylinderGeom, fixtureMat);
+  body.name = `sconce-body-${id}`;
+  const bodyX = wallX - 0.048;
+  body.position.set(bodyX, y, z);
+  body.castShadow = true;
+  sconce.add(body);
+
+  // 4. Brass accent trim rings
+  const ringGeom = new THREE.CylinderGeometry(cylinderRadius + 0.0015, cylinderRadius + 0.0015, 0.008, 24);
+  const topRing = new THREE.Mesh(ringGeom, brassTrimMat);
+  topRing.position.set(bodyX, y + cylinderHeight / 2 - 0.02, z);
+  sconce.add(topRing);
+
+  const bottomRing = new THREE.Mesh(ringGeom, brassTrimMat);
+  bottomRing.position.set(bodyX, y - cylinderHeight / 2 + 0.02, z);
+  sconce.add(bottomRing);
+
+  // 5. Emissive diffuser lenses (top & bottom)
+  const lensGeom = new THREE.CylinderGeometry(cylinderRadius - 0.003, cylinderRadius - 0.003, 0.014, 24);
+  const topLens = new THREE.Mesh(lensGeom, lensMat);
+  topLens.position.set(bodyX, y + cylinderHeight / 2 + 0.006, z);
+  sconce.add(topLens);
+
+  const bottomLens = new THREE.Mesh(lensGeom, lensMat);
+  bottomLens.position.set(bodyX, y - cylinderHeight / 2 - 0.006, z);
+  sconce.add(bottomLens);
+
+  // 6. Upward Light Wash against the right wall
+  const upSpot = new THREE.SpotLight(0xffd59e, 1.8);
+  upSpot.name = `sconce-up-${id}`;
+  upSpot.position.set(bodyX, y + 0.12, z);
+  upSpot.target.position.set(wallX, y + 1.1, z);
+  upSpot.angle = Math.PI / 4.5;
+  upSpot.penumbra = 0.8;
+  upSpot.distance = 2.4;
+  upSpot.decay = 2.0;
+  sconce.add(upSpot);
+  sconce.add(upSpot.target);
+
+  // 7. Downward Light Wash against the right wall
+  const downSpot = new THREE.SpotLight(0xffd59e, 1.8);
+  downSpot.name = `sconce-down-${id}`;
+  downSpot.position.set(bodyX, y - 0.12, z);
+  downSpot.target.position.set(wallX, y - 1.1, z);
+  downSpot.angle = Math.PI / 4.5;
+  downSpot.penumbra = 0.8;
+  downSpot.distance = 2.4;
+  downSpot.decay = 2.0;
+  sconce.add(downSpot);
+  sconce.add(downSpot.target);
+
+  // 8. Subtle warm ambient glow
+  const glow = new THREE.PointLight(0xffe0b8, 0.4, 1.8, 2.0);
+  glow.position.set(bodyX - 0.02, y, z);
+  sconce.add(glow);
+
+  return sconce;
 }
