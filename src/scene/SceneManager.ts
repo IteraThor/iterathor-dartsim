@@ -5,7 +5,8 @@ import { createDartboardGroup } from './Dartboard';
 import { createOcheGroup } from './Oche';
 import { createDimensionGuidesGroup } from './DimensionGuides';
 import { createPlayerDummyGroup } from './PlayerDummy';
-import { createIT2RingRigGroup } from './IT2RingRig';
+import { createIT2RingRigGroup, IT2RingRigGroup } from './IT2RingRig';
+import { createDartsGroup } from './Darts';
 import { DARTS_DIMENSIONS } from '../constants/dartsDimensions';
 
 export class SceneManager {
@@ -15,13 +16,19 @@ export class SceneManager {
   public controls: OrbitControls;
   public dimensionGuides: THREE.Group;
   public playerDummy: THREE.Group;
-  public it2RingRig: THREE.Group;
+  public it2RingRig: IT2RingRigGroup;
+  public darts: THREE.Group;
 
   public isDaylight = false;
   private daylightGroup: THREE.Group | null = null;
   private ambientLight: THREE.AmbientLight | null = null;
+  private boardSpot: THREE.SpotLight | null = null;
   private wallLightSwitch: THREE.Group | null = null;
   private daylightCallbacks: ((isDaylight: boolean) => void)[] = [];
+
+  public isRingLightActive = true;
+  private ringLightCallbacks: ((isOn: boolean) => void)[] = [];
+  private dartsCallbacks: ((hasDarts: boolean) => void)[] = [];
 
   private raycaster = new THREE.Raycaster();
   private mouse = new THREE.Vector2();
@@ -73,6 +80,7 @@ export class SceneManager {
     this.scene.add(room);
     this.daylightGroup = room.getObjectByName('daylight-group') as THREE.Group;
     this.ambientLight = room.getObjectByName('ambient-light') as THREE.AmbientLight;
+    this.boardSpot = room.getObjectByName('dartboard-spotlight') as THREE.SpotLight;
     this.wallLightSwitch = room.getObjectByName('wall-light-switch') as THREE.Group;
 
     this.scene.add(createDartboardGroup());
@@ -86,6 +94,11 @@ export class SceneManager {
 
     this.it2RingRig = createIT2RingRigGroup();
     this.scene.add(this.it2RingRig);
+
+    this.darts = createDartsGroup();
+    this.scene.add(this.darts);
+
+    this.updateBoardLighting();
 
     // 6. Interactive Physical Light Switch raycasting on the right wall
     const dom = this.renderer.domElement;
@@ -189,7 +202,46 @@ export class SceneManager {
 
   public toggleIT2Rig(visible?: boolean): boolean {
     this.it2RingRig.visible = visible !== undefined ? visible : !this.it2RingRig.visible;
+    this.updateBoardLighting();
     return this.it2RingRig.visible;
+  }
+
+  private updateBoardLighting(): void {
+    const isRingActive = this.it2RingRig.visible && this.isRingLightActive;
+    this.it2RingRig.setRingLightEnabled(isRingActive);
+
+    if (this.boardSpot) {
+      // When the 360° shadowless ring light is active, dim down the ceiling task spot
+      // to 0.35 (soft ambient fill) so the board is illuminated from all 360° with no downward shadows.
+      // When ring light is off, restore 3.4 for standard directional ceiling spotlight.
+      this.boardSpot.intensity = isRingActive ? 0.35 : 3.4;
+    }
+
+    this.ringLightCallbacks.forEach(cb => cb(isRingActive));
+  }
+
+  public toggleRingLight(enable?: boolean): boolean {
+    this.isRingLightActive = enable !== undefined ? enable : !this.isRingLightActive;
+    this.updateBoardLighting();
+    return this.isRingLightActive;
+  }
+
+  public isRingLightOn(): boolean {
+    return this.it2RingRig.visible && this.isRingLightActive;
+  }
+
+  public onRingLightChange(callback: (isOn: boolean) => void): void {
+    this.ringLightCallbacks.push(callback);
+  }
+
+  public toggleDarts(visible?: boolean): boolean {
+    this.darts.visible = visible !== undefined ? visible : !this.darts.visible;
+    this.dartsCallbacks.forEach(cb => cb(this.darts.visible));
+    return this.darts.visible;
+  }
+
+  public onDartsChange(callback: (hasDarts: boolean) => void): void {
+    this.dartsCallbacks.push(callback);
   }
 
   public toggleDaylight(enable?: boolean): boolean {
