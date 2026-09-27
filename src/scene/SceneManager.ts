@@ -225,10 +225,10 @@ export class SceneManager {
     this.it2RingRig.setRingLightEnabled(isRingActive);
 
     if (this.boardSpot) {
-      // When the 360° shadowless ring light is active, disable the ceiling spotlight (0.0)
-      // so 100% of the board illumination is true, clean shadowless ring light without blowout.
-      // When ring light is off, restore 3.4 for standard directional ceiling spotlight.
-      this.boardSpot.intensity = isRingActive ? 0.0 : 3.4;
+      // When ring light is active, maintain soft warm frontal fill (0.5) to preserve color depth and saturation,
+      // avoiding perimeter blowout while keeping shadowless board play.
+      // When ring light is off, restore 3.4 for full directional ceiling illumination.
+      this.boardSpot.intensity = isRingActive ? 0.5 : 3.4;
     }
 
     this.ringLightCallbacks.forEach(cb => cb(isRingActive));

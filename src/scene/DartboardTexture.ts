@@ -39,11 +39,11 @@ export function createDartboardTexture(): THREE.Texture {
   const segAngle = (Math.PI * 2) / numSegments;
   const offset = -Math.PI / 2 - segAngle / 2;
 
-  // Tournament Sisal Palette
-  const colorBlack = '#141518';
-  const colorCream = '#f5ebd2'; // authentic natural sisal cream
-  const colorRed = '#c82323';   // tournament rich red
-  const colorGreen = '#1b803a'; // tournament emerald green
+  // Tournament Sisal Palette (High-chroma tournament pigments)
+  const colorBlack = '#101114';
+  const colorCream = '#faf0d8'; // authentic natural sisal cream
+  const colorRed = '#d41919';   // vibrant tournament rich red
+  const colorGreen = '#0c8a3c'; // vibrant tournament emerald green
 
   // Draw 20 segments
   for (let i = 0; i < numSegments; i++) {
