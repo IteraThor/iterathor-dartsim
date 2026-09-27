@@ -5,6 +5,7 @@ import { createDartboardGroup } from './Dartboard';
 import { createOcheGroup } from './Oche';
 import { createDimensionGuidesGroup } from './DimensionGuides';
 import { createPlayerDummyGroup } from './PlayerDummy';
+import { createIT2RingRigGroup } from './IT2RingRig';
 import { DARTS_DIMENSIONS } from '../constants/dartsDimensions';
 
 export class SceneManager {
@@ -14,6 +15,7 @@ export class SceneManager {
   public controls: OrbitControls;
   public dimensionGuides: THREE.Group;
   public playerDummy: THREE.Group;
+  public it2RingRig: THREE.Group;
 
   public isDaylight = false;
   private daylightGroup: THREE.Group | null = null;
@@ -81,6 +83,9 @@ export class SceneManager {
 
     this.playerDummy = createPlayerDummyGroup();
     this.scene.add(this.playerDummy);
+
+    this.it2RingRig = createIT2RingRigGroup();
+    this.scene.add(this.it2RingRig);
 
     // 6. Interactive Physical Light Switch raycasting on the right wall
     const dom = this.renderer.domElement;
@@ -180,6 +185,11 @@ export class SceneManager {
   public togglePlayerDummy(visible?: boolean): boolean {
     this.playerDummy.visible = visible !== undefined ? visible : !this.playerDummy.visible;
     return this.playerDummy.visible;
+  }
+
+  public toggleIT2Rig(visible?: boolean): boolean {
+    this.it2RingRig.visible = visible !== undefined ? visible : !this.it2RingRig.visible;
+    return this.it2RingRig.visible;
   }
 
   public toggleDaylight(enable?: boolean): boolean {
