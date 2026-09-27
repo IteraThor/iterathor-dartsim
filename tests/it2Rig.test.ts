@@ -53,4 +53,12 @@ describe('IT2 Ring Rig Component', () => {
     expect(firstLight.intensity).toBeGreaterThan(0);
     expect(stripMat.emissiveIntensity).toBeGreaterThan(0);
   });
+
+  it('configures 90° counterclockwise default rotation around Z-axis', () => {
+    const defaultRig = createIT2RingRigGroup();
+    expect(defaultRig.userData.rotationZ).toBeCloseTo(Math.PI / 2, 4);
+
+    const customRig = createIT2RingRigGroup({ rotationZ: Math.PI });
+    expect(customRig.userData.rotationZ).toBeCloseTo(Math.PI, 4);
+  });
 });
