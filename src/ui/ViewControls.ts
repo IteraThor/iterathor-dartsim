@@ -5,7 +5,6 @@ export interface ViewControlsElement extends HTMLElement {
   isSidebarCollapsed: () => boolean;
   setSidebarCollapsed: (collapsed: boolean) => void;
   applyState: (state: AppSavedState) => void;
-  flashSaveIndicator: (isSaving?: boolean) => void;
 }
 
 export function setupViewControls(
@@ -150,28 +149,20 @@ export function setupViewControls(
     onStateChange?.();
   });
 
-  // Attach dimension toggle event
-  const toggleDimBtn = container.querySelector<HTMLButtonElement>('#toggle-dimensions')!;
-  toggleDimBtn.addEventListener('click', () => {
-    const isVisible = sceneManager.toggleDimensions();
-    toggleDimBtn.classList.toggle('active', isVisible);
-    onStateChange?.();
-  });
-
-  // Attach player dummy toggle event
-  const togglePlayerBtn = container.querySelector<HTMLButtonElement>('#toggle-player')!;
-  togglePlayerBtn.addEventListener('click', () => {
-    const isVisible = sceneManager.togglePlayerDummy();
-    togglePlayerBtn.classList.toggle('active', isVisible);
-    onStateChange?.();
-  });
-
-  // Attach IT2 rig toggle event
-  const toggleRigBtn = container.querySelector<HTMLButtonElement>('#toggle-it2-rig')!;
-  toggleRigBtn.addEventListener('click', () => {
-    const isVisible = sceneManager.toggleIT2Rig();
-    toggleRigBtn.classList.toggle('active', isVisible);
-    onStateChange?.();
+  // Attach hardware toggle events
+  const toggleMap: [string, () => boolean][] = [
+    ['toggle-dimensions', () => sceneManager.toggleDimensions()],
+    ['toggle-player', () => sceneManager.togglePlayerDummy()],
+    ['toggle-it2-rig', () => sceneManager.toggleIT2Rig()],
+  ];
+  const toggleBtns = new Map<string, HTMLButtonElement>();
+  toggleMap.forEach(([id, toggleFn]) => {
+    const btn = container.querySelector<HTMLButtonElement>(`#${id}`)!;
+    toggleBtns.set(id, btn);
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active', toggleFn());
+      onStateChange?.();
+    });
   });
 
   // Attach 360° Ring Light toggle event & dimmer
@@ -252,12 +243,11 @@ export function setupViewControls(
   // Attach controller methods to container
   container.isSidebarCollapsed = () => sidebar.classList.contains('collapsed');
   container.setSidebarCollapsed = setSidebarCollapsed;
-  container.flashSaveIndicator = () => {};
 
   container.applyState = (state: AppSavedState) => {
-    toggleDimBtn.classList.toggle('active', state.controls.isDimensionGuidesVisible);
-    togglePlayerBtn.classList.toggle('active', state.controls.isPlayerDummyVisible);
-    toggleRigBtn.classList.toggle('active', state.controls.isIT2RigVisible);
+    toggleBtns.get('toggle-dimensions')?.classList.toggle('active', state.controls.isDimensionGuidesVisible);
+    toggleBtns.get('toggle-player')?.classList.toggle('active', state.controls.isPlayerDummyVisible);
+    toggleBtns.get('toggle-it2-rig')?.classList.toggle('active', state.controls.isIT2RigVisible);
     toggleDartsBtn.classList.toggle('active', state.controls.is180DartsVisible);
     updateRingLightUI(state.controls.isRingLight);
     updateLightUI(state.controls.isDaylight);

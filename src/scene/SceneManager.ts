@@ -384,22 +384,6 @@ export class SceneManager {
     this.presetCallbacks.forEach(cb => cb(preset));
   }
 
-  public isDimensionsVisible(): boolean {
-    return this.dimensionGuides.visible;
-  }
-
-  public isPlayerVisible(): boolean {
-    return this.playerDummy.visible;
-  }
-
-  public isIT2Visible(): boolean {
-    return this.it2RingRig.visible;
-  }
-
-  public isDartsVisible(): boolean {
-    return this.darts.visible;
-  }
-
   private onWindowResize = (): void => {
     const parent = this.renderer.domElement.parentElement;
     if (!parent) return;

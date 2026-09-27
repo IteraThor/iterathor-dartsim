@@ -57,31 +57,16 @@ export function loadSavedState(): AppSavedState | null {
       return null;
     }
 
-    // Merge with defaults to ensure all fields are guaranteed
     return {
       version: 1,
       camera: {
-        position: {
-          x: typeof parsed.camera.position?.x === 'number' ? parsed.camera.position.x : DEFAULT_APP_STATE.camera.position.x,
-          y: typeof parsed.camera.position?.y === 'number' ? parsed.camera.position.y : DEFAULT_APP_STATE.camera.position.y,
-          z: typeof parsed.camera.position?.z === 'number' ? parsed.camera.position.z : DEFAULT_APP_STATE.camera.position.z
-        },
-        target: {
-          x: typeof parsed.camera.target?.x === 'number' ? parsed.camera.target.x : DEFAULT_APP_STATE.camera.target.x,
-          y: typeof parsed.camera.target?.y === 'number' ? parsed.camera.target.y : DEFAULT_APP_STATE.camera.target.y,
-          z: typeof parsed.camera.target?.z === 'number' ? parsed.camera.target.z : DEFAULT_APP_STATE.camera.target.z
-        },
+        position: { ...DEFAULT_APP_STATE.camera.position, ...parsed.camera.position },
+        target: { ...DEFAULT_APP_STATE.camera.target, ...parsed.camera.target },
         preset: parsed.camera.preset !== undefined ? parsed.camera.preset : DEFAULT_APP_STATE.camera.preset
       },
       controls: {
-        isDaylight: typeof parsed.controls.isDaylight === 'boolean' ? parsed.controls.isDaylight : DEFAULT_APP_STATE.controls.isDaylight,
-        isRingLight: typeof parsed.controls.isRingLight === 'boolean' ? parsed.controls.isRingLight : DEFAULT_APP_STATE.controls.isRingLight,
-        ringLightIntensity: typeof parsed.controls.ringLightIntensity === 'number' ? parsed.controls.ringLightIntensity : DEFAULT_APP_STATE.controls.ringLightIntensity,
-        isIT2RigVisible: typeof parsed.controls.isIT2RigVisible === 'boolean' ? parsed.controls.isIT2RigVisible : DEFAULT_APP_STATE.controls.isIT2RigVisible,
-        is180DartsVisible: typeof parsed.controls.is180DartsVisible === 'boolean' ? parsed.controls.is180DartsVisible : DEFAULT_APP_STATE.controls.is180DartsVisible,
-        isPlayerDummyVisible: typeof parsed.controls.isPlayerDummyVisible === 'boolean' ? parsed.controls.isPlayerDummyVisible : DEFAULT_APP_STATE.controls.isPlayerDummyVisible,
-        isDimensionGuidesVisible: typeof parsed.controls.isDimensionGuidesVisible === 'boolean' ? parsed.controls.isDimensionGuidesVisible : DEFAULT_APP_STATE.controls.isDimensionGuidesVisible,
-        isSidebarCollapsed: typeof parsed.controls.isSidebarCollapsed === 'boolean' ? parsed.controls.isSidebarCollapsed : DEFAULT_APP_STATE.controls.isSidebarCollapsed
+        ...DEFAULT_APP_STATE.controls,
+        ...parsed.controls
       }
     };
   } catch (err) {

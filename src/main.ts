@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const saveCurrentState = (): void => {
     const cam = sceneManager.getCameraState();
-    const state: AppSavedState = {
+    saveState({
       version: 1,
       camera: {
         position: cam.position,
@@ -35,38 +35,35 @@ document.addEventListener('DOMContentLoaded', () => {
         isDaylight: sceneManager.isDaylight,
         isRingLight: sceneManager.isRingLightActive,
         ringLightIntensity: sceneManager.getRingLightIntensity(),
-        isIT2RigVisible: sceneManager.isIT2Visible(),
-        is180DartsVisible: sceneManager.isDartsVisible(),
-        isPlayerDummyVisible: sceneManager.isPlayerVisible(),
-        isDimensionGuidesVisible: sceneManager.isDimensionsVisible(),
+        isIT2RigVisible: sceneManager.it2RingRig.visible,
+        is180DartsVisible: sceneManager.darts.visible,
+        isPlayerDummyVisible: sceneManager.playerDummy.visible,
+        isDimensionGuidesVisible: sceneManager.dimensionGuides.visible,
         isSidebarCollapsed: hudElement.isSidebarCollapsed()
       }
-    };
-    saveState(state);
+    });
   };
 
   const triggerAutoSave = (): void => {
     if (saveTimeout) window.clearTimeout(saveTimeout);
-    saveTimeout = window.setTimeout(() => {
-      saveCurrentState();
-    }, 180);
+    saveTimeout = window.setTimeout(saveCurrentState, 180);
+  };
+
+  const applyStateToScene = (state: AppSavedState): void => {
+    sceneManager.setCameraState(state.camera.position, state.camera.target, state.camera.preset);
+    sceneManager.toggleDaylight(state.controls.isDaylight);
+    sceneManager.toggleRingLight(state.controls.isRingLight);
+    sceneManager.setRingLightIntensity(state.controls.ringLightIntensity);
+    sceneManager.toggleIT2Rig(state.controls.isIT2RigVisible);
+    sceneManager.toggleDarts(state.controls.is180DartsVisible);
+    sceneManager.togglePlayerDummy(state.controls.isPlayerDummyVisible);
+    sceneManager.toggleDimensions(state.controls.isDimensionGuidesVisible);
+    hudElement.applyState(state);
   };
 
   const handleReset = (): void => {
     clearSavedState();
-    sceneManager.setCameraState(
-      DEFAULT_APP_STATE.camera.position,
-      DEFAULT_APP_STATE.camera.target,
-      DEFAULT_APP_STATE.camera.preset
-    );
-    sceneManager.toggleDaylight(DEFAULT_APP_STATE.controls.isDaylight);
-    sceneManager.toggleRingLight(DEFAULT_APP_STATE.controls.isRingLight);
-    sceneManager.setRingLightIntensity(DEFAULT_APP_STATE.controls.ringLightIntensity);
-    sceneManager.toggleIT2Rig(DEFAULT_APP_STATE.controls.isIT2RigVisible);
-    sceneManager.toggleDarts(DEFAULT_APP_STATE.controls.is180DartsVisible);
-    sceneManager.togglePlayerDummy(DEFAULT_APP_STATE.controls.isPlayerDummyVisible);
-    sceneManager.toggleDimensions(DEFAULT_APP_STATE.controls.isDimensionGuidesVisible);
-    hudElement.applyState(DEFAULT_APP_STATE);
+    applyStateToScene(DEFAULT_APP_STATE);
     saveCurrentState();
   };
 
@@ -76,15 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load and restore previous session state if available
   const saved = loadSavedState();
   if (saved) {
-    sceneManager.setCameraState(saved.camera.position, saved.camera.target, saved.camera.preset);
-    sceneManager.toggleDaylight(saved.controls.isDaylight);
-    sceneManager.toggleRingLight(saved.controls.isRingLight);
-    sceneManager.setRingLightIntensity(saved.controls.ringLightIntensity);
-    sceneManager.toggleIT2Rig(saved.controls.isIT2RigVisible);
-    sceneManager.toggleDarts(saved.controls.is180DartsVisible);
-    sceneManager.togglePlayerDummy(saved.controls.isPlayerDummyVisible);
-    sceneManager.toggleDimensions(saved.controls.isDimensionGuidesVisible);
-    hudElement.applyState(saved);
+    applyStateToScene(saved);
   } else {
     // Default view: 3D Orbit overview showing room, floor, and board
     sceneManager.setViewPreset('isometric', false);
