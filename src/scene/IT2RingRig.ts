@@ -47,8 +47,8 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingR
 
   const stripMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
-    emissive: 0xf6faff,
-    emissiveIntensity: 1.8,
+    emissive: 0xfff7ec,
+    emissiveIntensity: 1.2,
     roughness: 0.25,
     metalness: 0.1,
     side: THREE.DoubleSide,
@@ -67,8 +67,8 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingR
 
   const diffuserMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
-    emissive: 0xffffff,
-    emissiveIntensity: 0.6,
+    emissive: 0xfff7ec,
+    emissiveIntensity: 0.4,
     transparent: true,
     opacity: 0.65,
     roughness: 0.5,
@@ -86,8 +86,8 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingR
   const lightCount = 12;
   const lightRadius = 0.338; // 338mm (just inside the LED channel)
   const lightZ = 0.170; // 170mm (132mm in front of board face)
-  const baseIntensity = 0.14; // Soft, realistic, non-glaring illumination
-  const lightColor = 0xf6faff; // 5700K tournament cool daylight
+  const baseIntensity = 0.10; // Balanced illumination preserving vibrant pigment saturation
+  const lightColor = 0xfff7ec; // High-CRI 4200K tournament neutral white
 
   for (let i = 0; i < lightCount; i++) {
     const angle = (i / lightCount) * Math.PI * 2;
@@ -109,8 +109,8 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingR
 
   const updateLights = () => {
     const factor = isLightEnabled ? intensityFactor : 0.0;
-    stripMat.emissiveIntensity = 1.8 * factor;
-    diffuserMat.emissiveIntensity = 0.6 * factor;
+    stripMat.emissiveIntensity = 1.2 * factor;
+    diffuserMat.emissiveIntensity = 0.4 * factor;
     stripMat.needsUpdate = true;
     diffuserMat.needsUpdate = true;
     lights.forEach((l) => {

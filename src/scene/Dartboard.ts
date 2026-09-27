@@ -34,8 +34,8 @@ export function createDartboardGroup(): THREE.Group {
     map: texture,
     bumpMap: bumpMap,
     bumpScale: 0.0005,
-    roughness: 0.82,
-    metalness: 0.04
+    roughness: 0.96,
+    metalness: 0.0
   });
 
   const backMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.95 });
