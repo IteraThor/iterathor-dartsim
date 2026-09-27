@@ -30,6 +30,9 @@ export class SceneManager {
   private ringLightCallbacks: ((isOn: boolean) => void)[] = [];
   private dartsCallbacks: ((hasDarts: boolean) => void)[] = [];
 
+  public currentPreset: 'oche' | 'board' | 'side' | 'top' | 'isometric' | null = 'isometric';
+  private presetCallbacks: ((preset: 'oche' | 'board' | 'side' | 'top' | 'isometric' | null) => void)[] = [];
+
   private raycaster = new THREE.Raycaster();
   private mouse = new THREE.Vector2();
   private pointerDownPos = new THREE.Vector2();
@@ -74,6 +77,14 @@ export class SceneManager {
     this.controls.maxPolarAngle = Math.PI / 2 - 0.02; // prevent camera going below floor
     this.controls.minDistance = 0.2;
     this.controls.maxDistance = 10.0;
+
+    // Reset preset indicator when user manually orbits, pans, or zooms
+    this.controls.addEventListener('start', () => {
+      if (this.currentPreset !== null) {
+        this.currentPreset = null;
+        this.presetCallbacks.forEach(cb => cb(null));
+      }
+    });
 
     // 5. Add Scene Components
     const room = createDartRoomGroup();
@@ -143,6 +154,8 @@ export class SceneManager {
   }
 
   public setViewPreset(preset: 'oche' | 'board' | 'side' | 'top' | 'isometric', animate = true): void {
+    this.currentPreset = preset;
+    this.presetCallbacks.forEach(cb => cb(preset));
     const targetPos = new THREE.Vector3();
     const targetLook = new THREE.Vector3();
 
@@ -331,6 +344,60 @@ export class SceneManager {
   public stop(): void {
     this.isRunning = false;
     cancelAnimationFrame(this.animationFrameId);
+  }
+
+  public onPresetChange(callback: (preset: 'oche' | 'board' | 'side' | 'top' | 'isometric' | null) => void): void {
+    this.presetCallbacks.push(callback);
+  }
+
+  public getCameraState(): {
+    position: { x: number; y: number; z: number };
+    target: { x: number; y: number; z: number };
+    preset: 'oche' | 'board' | 'side' | 'top' | 'isometric' | null;
+  } {
+    return {
+      position: {
+        x: Number(this.camera.position.x.toFixed(4)),
+        y: Number(this.camera.position.y.toFixed(4)),
+        z: Number(this.camera.position.z.toFixed(4))
+      },
+      target: {
+        x: Number(this.controls.target.x.toFixed(4)),
+        y: Number(this.controls.target.y.toFixed(4)),
+        z: Number(this.controls.target.z.toFixed(4))
+      },
+      preset: this.currentPreset
+    };
+  }
+
+  public setCameraState(
+    position: { x: number; y: number; z: number },
+    target: { x: number; y: number; z: number },
+    preset: 'oche' | 'board' | 'side' | 'top' | 'isometric' | null = null
+  ): void {
+    this.isTransitioning = false;
+    this.camera.position.set(position.x, position.y, position.z);
+    this.controls.target.set(target.x, target.y, target.z);
+    this.camera.lookAt(this.controls.target);
+    this.controls.update();
+    this.currentPreset = preset;
+    this.presetCallbacks.forEach(cb => cb(preset));
+  }
+
+  public isDimensionsVisible(): boolean {
+    return this.dimensionGuides.visible;
+  }
+
+  public isPlayerVisible(): boolean {
+    return this.playerDummy.visible;
+  }
+
+  public isIT2Visible(): boolean {
+    return this.it2RingRig.visible;
+  }
+
+  public isDartsVisible(): boolean {
+    return this.darts.visible;
   }
 
   private onWindowResize = (): void => {
