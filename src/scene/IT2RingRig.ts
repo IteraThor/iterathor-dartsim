@@ -175,8 +175,8 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingR
             mesh.geometry.computeVertexNormals();
           }
           mesh.material = rigMaterial;
-          mesh.castShadow = true;
-          mesh.receiveShadow = true;
+          mesh.castShadow = false;
+          mesh.receiveShadow = false;
         }
       });
 
