@@ -93,14 +93,11 @@ export function setupViewControls(
           </div>
         </div>
 
-        <!-- Section 4: Auto-Save Status & Reset -->
+        <!-- Section 4: System Reset -->
         <div class="control-section">
           <div class="sidebar-footer-row">
-            <span class="save-status-indicator" id="save-status-indicator" title="Settings and camera angle auto-saved to browser storage">
-              <span class="save-dot"></span> <span id="save-status-text">Saved</span>
-            </span>
             <button id="btn-reset-defaults" class="btn btn-reset" title="Reset all camera views and controls to regulation defaults">
-              <span class="icon">↺</span> Reset
+              <span class="icon">↺</span> Reset Defaults
             </button>
           </div>
         </div>
@@ -252,28 +249,10 @@ export function setupViewControls(
     onReset?.();
   });
 
-  // Save Status Indicator
-  const saveIndicator = container.querySelector<HTMLElement>('#save-status-indicator')!;
-  const saveText = container.querySelector<HTMLSpanElement>('#save-status-text')!;
-  let saveTimer: number | undefined;
-
-  const flashSaveIndicator = (isSaving = false) => {
-    if (!saveIndicator || !saveText) return;
-    if (saveTimer) window.clearTimeout(saveTimer);
-
-    if (isSaving) {
-      saveIndicator.classList.add('saving');
-      saveText.textContent = 'Saving...';
-    } else {
-      saveIndicator.classList.remove('saving');
-      saveText.textContent = 'Saved';
-    }
-  };
-
   // Attach controller methods to container
   container.isSidebarCollapsed = () => sidebar.classList.contains('collapsed');
   container.setSidebarCollapsed = setSidebarCollapsed;
-  container.flashSaveIndicator = flashSaveIndicator;
+  container.flashSaveIndicator = () => {};
 
   container.applyState = (state: AppSavedState) => {
     toggleDimBtn.classList.toggle('active', state.controls.isDimensionGuidesVisible);

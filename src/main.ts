@@ -46,11 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const triggerAutoSave = (): void => {
-    hudElement.flashSaveIndicator(true);
     if (saveTimeout) window.clearTimeout(saveTimeout);
     saveTimeout = window.setTimeout(() => {
       saveCurrentState();
-      hudElement.flashSaveIndicator(false);
     }, 180);
   };
 
