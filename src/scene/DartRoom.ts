@@ -166,15 +166,7 @@ export function createDartRoomGroup(): THREE.Group {
   ambientLight.name = 'ambient-light';
   room.add(ambientLight);
 
-  // Fixture canister material for physical ceiling mounts
-  const fixtureMat = new THREE.MeshStandardMaterial({
-    color: 0x18181b,
-    roughness: 0.5,
-    metalness: 0.8
-  });
-  const fixtureGeom = new THREE.CylinderGeometry(0.06, 0.06, 0.08, 16);
-
-  // SOURCE 1: Dartboard Task Spotlight (Ceiling mount angled down at board)
+  // SOURCE 1: Dartboard Task Spotlight (Angled down at board)
   const boardSpot = new THREE.SpotLight(0xfff6eb, 3.4);
   boardSpot.name = 'dartboard-spotlight';
   boardSpot.position.set(0, 2.75, 0.65);
@@ -187,10 +179,6 @@ export function createDartRoomGroup(): THREE.Group {
   boardSpot.shadow.bias = -0.0001;
   room.add(boardSpot);
   room.add(boardSpot.target);
-
-  const boardFixture = new THREE.Mesh(fixtureGeom, fixtureMat);
-  boardFixture.position.set(0, 2.78, 0.65);
-  room.add(boardFixture);
 
   // SOURCE 2: Player Ceiling Light (Mounted overhead close to player at throw line)
   // Brighter wide-cone downlight to illuminate the floor and player area naturally
@@ -206,10 +194,6 @@ export function createDartRoomGroup(): THREE.Group {
   playerCeilingLight.shadow.bias = -0.0001;
   room.add(playerCeilingLight);
   room.add(playerCeilingLight.target);
-
-  const playerFixture = new THREE.Mesh(fixtureGeom, fixtureMat);
-  playerFixture.position.set(0, 2.78, 2.65);
-  room.add(playerFixture);
 
   return room;
 }
