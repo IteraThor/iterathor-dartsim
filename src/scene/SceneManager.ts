@@ -211,10 +211,10 @@ export class SceneManager {
     this.it2RingRig.setRingLightEnabled(isRingActive);
 
     if (this.boardSpot) {
-      // When the 360° shadowless ring light is active, dim down the ceiling task spot
-      // to 0.35 (soft ambient fill) so the board is illuminated from all 360° with no downward shadows.
+      // When the 360° shadowless ring light is active, disable the ceiling spotlight (0.0)
+      // so 100% of the board illumination is true, clean shadowless ring light without blowout.
       // When ring light is off, restore 3.4 for standard directional ceiling spotlight.
-      this.boardSpot.intensity = isRingActive ? 0.35 : 3.4;
+      this.boardSpot.intensity = isRingActive ? 0.0 : 3.4;
     }
 
     this.ringLightCallbacks.forEach(cb => cb(isRingActive));
@@ -232,6 +232,14 @@ export class SceneManager {
 
   public onRingLightChange(callback: (isOn: boolean) => void): void {
     this.ringLightCallbacks.push(callback);
+  }
+
+  public setRingLightIntensity(factor: number): void {
+    this.it2RingRig.setRingLightIntensity(factor);
+  }
+
+  public getRingLightIntensity(): number {
+    return this.it2RingRig.getRingLightIntensity();
   }
 
   public toggleDarts(visible?: boolean): boolean {
