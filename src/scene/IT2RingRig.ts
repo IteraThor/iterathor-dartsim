@@ -43,11 +43,11 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingR
   const stripMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     emissive: 0xf6faff,
-    emissiveIntensity: 4.2,
-    roughness: 0.2,
+    emissiveIntensity: 1.8,
+    roughness: 0.25,
     metalness: 0.1,
     side: THREE.DoubleSide,
-    toneMapped: false
+    toneMapped: true
   });
   const ledStripMesh = new THREE.Mesh(stripGeom, stripMat);
   ledStripMesh.name = 'it2-led-strip';
@@ -63,10 +63,10 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingR
   const diffuserMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     emissive: 0xffffff,
-    emissiveIntensity: 1.5,
+    emissiveIntensity: 0.6,
     transparent: true,
-    opacity: 0.72,
-    roughness: 0.45,
+    opacity: 0.65,
+    roughness: 0.5,
     side: THREE.DoubleSide
   });
   const diffuserMesh = new THREE.Mesh(diffuserGeom, diffuserMat);
@@ -81,7 +81,7 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingR
   const lightCount = 12;
   const lightRadius = 0.338; // 338mm (just inside the LED channel)
   const lightZ = 0.170; // 170mm (132mm in front of board face)
-  const baseIntensity = 0.75;
+  const baseIntensity = 0.14; // Soft, realistic, non-glaring illumination
   const lightColor = 0xf6faff; // 5700K tournament cool daylight
 
   for (let i = 0; i < lightCount; i++) {
@@ -89,7 +89,7 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingR
     const x = lightRadius * Math.cos(angle);
     const y = lightRadius * Math.sin(angle);
 
-    const light = new THREE.PointLight(lightColor, baseIntensity, 1.15, 2.0);
+    const light = new THREE.PointLight(lightColor, baseIntensity, 0.95, 2.0);
     light.name = `it2-led-light-${i}`;
     light.position.set(x, y, lightZ);
     light.castShadow = false; // Zero directional shadows; 360° light cross-cancels shadows
@@ -104,8 +104,8 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingR
 
   const updateLights = () => {
     const factor = isLightEnabled ? intensityFactor : 0.0;
-    stripMat.emissiveIntensity = 4.2 * factor;
-    diffuserMat.emissiveIntensity = 1.5 * factor;
+    stripMat.emissiveIntensity = 1.8 * factor;
+    diffuserMat.emissiveIntensity = 0.6 * factor;
     stripMat.needsUpdate = true;
     diffuserMat.needsUpdate = true;
     lights.forEach((l) => {

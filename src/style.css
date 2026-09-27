@@ -210,8 +210,60 @@ body, html {
   box-shadow: 0 0 16px rgba(250, 204, 21, 0.3);
 }
 
+.ring-light-group-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dimmer-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  height: 33px;
+  transition: opacity 0.2s ease;
+}
+
+.dimmer-icon {
+  font-size: 0.72rem;
+  opacity: 0.85;
+  user-select: none;
+}
+
+.mini-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 52px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.22);
+  outline: none;
+  cursor: pointer;
+}
+
+.mini-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-gold);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+  transition: transform 0.1s ease;
+}
+
+.mini-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
 @media (max-width: 820px) {
   .hud-metrics {
     display: none;
   }
 }
+
