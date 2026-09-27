@@ -31,15 +31,11 @@ describe('IT2 Ring Rig Component', () => {
     }
   });
 
-  it('toggles ring light on and off, adjusting emissive intensity and emitter intensities', () => {
+  it('enables and disables ring light, adjusting emissive intensity and emitter intensities', () => {
     const rig = createIT2RingRigGroup();
-    expect(rig.isRingLightEnabled()).toBe(true);
 
-    // Toggle OFF
-    const newState = rig.toggleRingLight();
-    expect(newState).toBe(false);
-    expect(rig.isRingLightEnabled()).toBe(false);
-
+    // Disable ring light
+    rig.setRingLightEnabled(false);
     const firstLight = rig.getObjectByName('it2-led-light-0') as THREE.PointLight;
     expect(firstLight.intensity).toBe(0);
 
@@ -47,9 +43,8 @@ describe('IT2 Ring Rig Component', () => {
     const stripMat = ledStrip.material as THREE.MeshStandardMaterial;
     expect(stripMat.emissiveIntensity).toBe(0);
 
-    // Turn back ON
+    // Re-enable ring light
     rig.setRingLightEnabled(true);
-    expect(rig.isRingLightEnabled()).toBe(true);
     expect(firstLight.intensity).toBeGreaterThan(0);
     expect(stripMat.emissiveIntensity).toBeGreaterThan(0);
   });

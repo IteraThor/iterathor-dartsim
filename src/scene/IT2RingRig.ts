@@ -10,8 +10,6 @@ export interface IT2RingRigOptions {
 
 export interface IT2RingRigGroup extends THREE.Group {
   setRingLightEnabled: (enabled: boolean) => void;
-  isRingLightEnabled: () => boolean;
-  toggleRingLight: () => boolean;
   setRingLightIntensity: (factor: number) => void;
   getRingLightIntensity: () => number;
 }
@@ -121,14 +119,6 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingR
   root.setRingLightEnabled = (enabled: boolean) => {
     isLightEnabled = enabled;
     updateLights();
-  };
-
-  root.isRingLightEnabled = () => isLightEnabled;
-
-  root.toggleRingLight = () => {
-    isLightEnabled = !isLightEnabled;
-    updateLights();
-    return isLightEnabled;
   };
 
   root.setRingLightIntensity = (factor: number) => {
