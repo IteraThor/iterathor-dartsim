@@ -69,85 +69,6 @@ body, html {
   padding: 24px;
 }
 
-.hud-header {
-  pointer-events: auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 22px;
-  max-width: 960px;
-  margin: 0 auto;
-  width: 100%;
-  gap: 20px;
-}
-
-.hud-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.hud-logo {
-  font-size: 1.8rem;
-  line-height: 1;
-  filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.4));
-}
-
-.hud-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #ffffff;
-}
-
-.hud-subtitle {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-top: 1px;
-}
-
-.badge {
-  background: rgba(56, 189, 248, 0.12);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 3px 9px;
-  border-radius: 6px;
-}
-
-.hud-metrics {
-  display: flex;
-  gap: 24px;
-  align-items: center;
-}
-
-.metric-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.metric-label {
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.metric-value {
-  font-size: 0.96rem;
-  font-weight: 600;
-  color: var(--accent-gold);
-}
-
-.metric-value small {
-  font-size: 0.76rem;
-  font-weight: normal;
-  color: #94a3b8;
-  margin-left: 2px;
-}
 
 .hud-bottom-bar {
   pointer-events: auto;
@@ -216,10 +137,10 @@ body, html {
 
 .hud-sidebar {
   position: absolute;
-  top: 92px;
+  top: 24px;
   left: 24px;
   width: 290px;
-  max-height: calc(100vh - 120px);
+  max-height: calc(100vh - 48px);
   pointer-events: auto;
   display: flex;
   flex-direction: column;
@@ -286,7 +207,7 @@ body, html {
 
 .sidebar-floating-toggle {
   position: absolute;
-  top: 92px;
+  top: 24px;
   left: 24px;
   pointer-events: auto;
   display: inline-flex;

@@ -4,31 +4,6 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
   const container = document.createElement('div');
   container.className = 'hud-overlay';
   container.innerHTML = `
-    <header class="hud-header glass-card">
-      <div class="hud-title-wrap">
-        <div class="hud-logo">🎯</div>
-        <div>
-          <h1 class="hud-title">Darts 3D Environment</h1>
-          <p class="hud-subtitle">Regulation Simulation & Room Setup</p>
-        </div>
-        <span class="badge">Official Specs</span>
-      </div>
-      <div class="hud-metrics">
-        <div class="metric-item">
-          <span class="metric-label">Bullseye Height</span>
-          <span class="metric-value">1.73 m</span>
-        </div>
-        <div class="metric-item">
-          <span class="metric-label">Throw Distance</span>
-          <span class="metric-value">2.37 m</span>
-        </div>
-        <div class="metric-item">
-          <span class="metric-label">Board Diameter</span>
-          <span class="metric-value">451 mm</span>
-        </div>
-      </div>
-    </header>
-
     <div id="hud-sidebar" class="hud-sidebar glass-card">
       <div class="sidebar-header">
         <div class="sidebar-title-wrap">
