@@ -4,6 +4,7 @@ import { DARTS_DIMENSIONS } from '../constants/dartsDimensions';
 
 export interface IT2RingRigOptions {
   modelUrl?: string;
+  rotationZ?: number;
   onLoaded?: (group: THREE.Group) => void;
 }
 
@@ -23,6 +24,10 @@ export interface IT2RingRigGroup extends THREE.Group {
 export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingRigGroup {
   const root = new THREE.Group() as IT2RingRigGroup;
   root.name = 'it2-ring-rig';
+
+  // 90° counterclockwise default rotation around Z-axis (aligns mounting arms to 0°, 120°, 240°)
+  const defaultRotZ = options.rotationZ !== undefined ? options.rotationZ : Math.PI / 2;
+  root.userData.rotationZ = defaultRotZ;
 
   // Mount centered at the bullseye height, flush against the back wall (Z = -0.038m)
   root.position.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS, -DARTS_DIMENSIONS.BOARD_THICKNESS_METERS);
@@ -159,6 +164,9 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingR
 
       // Convert CAD millimeter coordinates to meters
       model.scale.set(0.001, 0.001, 0.001);
+
+      // Rotate 90 degrees counterclockwise around board center (Z-axis)
+      model.rotation.z = defaultRotZ;
 
       model.traverse((child) => {
         if ((child as THREE.Mesh).isMesh) {
