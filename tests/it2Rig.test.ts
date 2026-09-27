@@ -9,6 +9,6 @@ describe('IT2 Ring Rig Component', () => {
     expect(rig).toBeInstanceOf(THREE.Group);
     expect(rig.name).toBe('it2-ring-rig');
     expect(rig.position.y).toBeCloseTo(DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS, 3);
-    expect(rig.position.z).toBeCloseTo(0.0, 3);
+    expect(rig.position.z).toBeCloseTo(-DARTS_DIMENSIONS.BOARD_THICKNESS_METERS, 3);
   });
 });

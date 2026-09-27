@@ -15,8 +15,8 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): THREE.Gr
   const root = new THREE.Group();
   root.name = 'it2-ring-rig';
 
-  // Mount centered at the bullseye height, flush with the dartboard face
-  root.position.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS, 0.0);
+  // Mount centered at the bullseye height, flush against the back wall (Z = -0.038m)
+  root.position.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS, -DARTS_DIMENSIONS.BOARD_THICKNESS_METERS);
 
   // In Node/test environments where fetch or window is unavailable, return initialized group
   if (typeof window === 'undefined' || typeof fetch === 'undefined') {
