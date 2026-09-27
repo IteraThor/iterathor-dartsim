@@ -7,16 +7,131 @@ export interface IT2RingRigOptions {
   onLoaded?: (group: THREE.Group) => void;
 }
 
+export interface IT2RingRigGroup extends THREE.Group {
+  setRingLightEnabled: (enabled: boolean) => void;
+  isRingLightEnabled: () => boolean;
+  toggleRingLight: () => boolean;
+  setRingLightIntensity: (factor: number) => void;
+  getRingLightIntensity: () => number;
+}
+
 /**
  * Creates the IT2 3-Camera Darts Ring Rig assembly mounted around the dartboard.
- * Sourced directly from IT2 Assembly CAD geometry with 3 camera pods at 120° intervals.
+ * Sourced directly from IT2 Assembly CAD geometry with 3 camera pods at 120° intervals
+ * and an integrated 360° shadowless LED ring light illuminating the dartboard face.
  */
-export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): THREE.Group {
-  const root = new THREE.Group();
+export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): IT2RingRigGroup {
+  const root = new THREE.Group() as IT2RingRigGroup;
   root.name = 'it2-ring-rig';
 
   // Mount centered at the bullseye height, flush against the back wall (Z = -0.038m)
   root.position.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS, -DARTS_DIMENSIONS.BOARD_THICKNESS_METERS);
+
+  // -------------------------------------------------------------
+  // 360° Continuous COB LED Strip & Physical Light Emitters
+  // Sits in the CAD ring's inner rim channel (radius 343mm, Z = 173mm)
+  // -------------------------------------------------------------
+  const stripRadius = 0.343;
+  const stripWidth = 0.007; // 7mm width recessed inside ring channel
+  const ringZ = 0.173; // CAD Z position in meters
+
+  // 1. Emissive High-CRI LED Core Strip
+  const stripGeom = new THREE.CylinderGeometry(stripRadius, stripRadius, stripWidth, 96, 1, true);
+  stripGeom.rotateX(Math.PI / 2);
+  stripGeom.translate(0, 0, ringZ);
+
+  const stripMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    emissive: 0xf6faff,
+    emissiveIntensity: 4.2,
+    roughness: 0.2,
+    metalness: 0.1,
+    side: THREE.DoubleSide,
+    toneMapped: false
+  });
+  const ledStripMesh = new THREE.Mesh(stripGeom, stripMat);
+  ledStripMesh.name = 'it2-led-strip';
+  root.add(ledStripMesh);
+
+  // 2. Frosted Silicone Diffuser Lip for realistic soft glow
+  const diffuserRadius = 0.342;
+  const diffuserWidth = 0.008;
+  const diffuserGeom = new THREE.CylinderGeometry(diffuserRadius, diffuserRadius, diffuserWidth, 96, 1, true);
+  diffuserGeom.rotateX(Math.PI / 2);
+  diffuserGeom.translate(0, 0, ringZ);
+
+  const diffuserMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    emissive: 0xffffff,
+    emissiveIntensity: 1.5,
+    transparent: true,
+    opacity: 0.72,
+    roughness: 0.45,
+    side: THREE.DoubleSide
+  });
+  const diffuserMesh = new THREE.Mesh(diffuserGeom, diffuserMat);
+  diffuserMesh.name = 'it2-led-diffuser';
+  root.add(diffuserMesh);
+
+  // 3. 12 Symmetrical 360° Point Light Emitters for true shadowless illumination
+  const lightGroup = new THREE.Group();
+  lightGroup.name = 'it2-ring-light-group';
+
+  const lights: THREE.PointLight[] = [];
+  const lightCount = 12;
+  const lightRadius = 0.338; // 338mm (just inside the LED channel)
+  const lightZ = 0.170; // 170mm (132mm in front of board face)
+  const baseIntensity = 0.75;
+  const lightColor = 0xf6faff; // 5700K tournament cool daylight
+
+  for (let i = 0; i < lightCount; i++) {
+    const angle = (i / lightCount) * Math.PI * 2;
+    const x = lightRadius * Math.cos(angle);
+    const y = lightRadius * Math.sin(angle);
+
+    const light = new THREE.PointLight(lightColor, baseIntensity, 1.15, 2.0);
+    light.name = `it2-led-light-${i}`;
+    light.position.set(x, y, lightZ);
+    light.castShadow = false; // Zero directional shadows; 360° light cross-cancels shadows
+    lightGroup.add(light);
+    lights.push(light);
+  }
+  root.add(lightGroup);
+
+  // Light State & Controller Methods
+  let isLightEnabled = true;
+  let intensityFactor = 1.0;
+
+  const updateLights = () => {
+    const factor = isLightEnabled ? intensityFactor : 0.0;
+    stripMat.emissiveIntensity = 4.2 * factor;
+    diffuserMat.emissiveIntensity = 1.5 * factor;
+    stripMat.needsUpdate = true;
+    diffuserMat.needsUpdate = true;
+    lights.forEach((l) => {
+      l.intensity = baseIntensity * factor;
+    });
+  };
+
+  root.setRingLightEnabled = (enabled: boolean) => {
+    isLightEnabled = enabled;
+    updateLights();
+  };
+
+  root.isRingLightEnabled = () => isLightEnabled;
+
+  root.toggleRingLight = () => {
+    isLightEnabled = !isLightEnabled;
+    updateLights();
+    return isLightEnabled;
+  };
+
+  root.setRingLightIntensity = (factor: number) => {
+    intensityFactor = Math.max(0, Math.min(3, factor));
+    updateLights();
+  };
+
+  root.getRingLightIntensity = () => intensityFactor;
 
   // In Node/test environments where fetch or window is unavailable, return initialized group
   if (typeof window === 'undefined' || typeof fetch === 'undefined') {
