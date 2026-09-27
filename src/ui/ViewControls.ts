@@ -29,44 +29,89 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
       </div>
     </header>
 
-    <div class="hud-bottom-bar">
-      <div class="view-preset-group glass-card">
-        <span class="group-label">Camera Presets:</span>
-        <button class="btn btn-preset" data-preset="oche" title="Player eye-level view at the oche">🎯 Player Oche</button>
-        <button class="btn btn-preset" data-preset="board" title="Close-up board perspective">Board Close-up</button>
-        <button class="btn btn-preset" data-preset="side" title="Side elevation view showing throw distance">Side Elevation</button>
-        <button class="btn btn-preset" data-preset="top" title="Top-down floor plan view">Top-Down</button>
-        <button class="btn btn-preset active" data-preset="isometric" title="Interactive free 3D orbit view">3D Orbit</button>
+    <div id="hud-sidebar" class="hud-sidebar glass-card">
+      <div class="sidebar-header">
+        <div class="sidebar-title-wrap">
+          <span class="sidebar-icon">🎮</span>
+          <span class="sidebar-title">Controls</span>
+        </div>
+        <button id="sidebar-collapse-btn" class="sidebar-collapse-btn" title="Collapse Menu">
+          <span>◀</span>
+        </button>
       </div>
 
-      <div class="toggle-group glass-card">
-        <button id="toggle-dimensions" class="btn btn-toggle active" title="Toggle regulation measurement lines">
-          <span class="icon">📏</span> Dimension Guides
-        </button>
-        <button id="toggle-player" class="btn btn-toggle active" title="Toggle 3D player mannequin at the throw line">
-          <span class="icon">🧍</span> Player Dummy
-        </button>
-        <button id="toggle-it2-rig" class="btn btn-toggle active" title="Toggle IT2 3-Camera Rig mounted around dartboard">
-          <span class="icon">📷</span> IT2 Ring Rig
-        </button>
-        <div class="ring-light-group-wrap">
-          <button id="toggle-ring-light" class="btn btn-toggle active" title="Toggle 360° Shadowless LED Ring Light">
-            <span class="icon">⭕</span> <span id="ring-light-toggle-label">Ring Light ON</span>
-          </button>
-          <div id="ring-dimmer-wrap" class="dimmer-control" title="Adjust Ring Light Brightness">
-            <span class="dimmer-icon">🔅</span>
-            <input type="range" id="ring-light-dimmer" min="0.2" max="1.5" step="0.05" value="1.0" class="mini-slider" aria-label="Ring Light Brightness">
-            <span class="dimmer-icon">🔆</span>
+      <div class="sidebar-content">
+        <!-- Section 1: Camera Perspectives -->
+        <div class="control-section">
+          <div class="section-label">Camera Views</div>
+          <div class="sidebar-btn-grid">
+            <button class="btn btn-preset" data-preset="oche" title="Player eye-level view at the oche">
+              <span class="icon">🎯</span> Oche
+            </button>
+            <button class="btn btn-preset" data-preset="board" title="Close-up board perspective">
+              <span class="icon">🔍</span> Board
+            </button>
+            <button class="btn btn-preset" data-preset="side" title="Side elevation view showing throw distance">
+              <span class="icon">📐</span> Side
+            </button>
+            <button class="btn btn-preset" data-preset="top" title="Top-down floor plan view">
+              <span class="icon">🗺️</span> Top
+            </button>
+            <button class="btn btn-preset active grid-span-2" data-preset="isometric" title="Interactive free 3D orbit view">
+              <span class="icon">🔄</span> Free 3D Orbit
+            </button>
           </div>
         </div>
-        <button id="toggle-darts" class="btn btn-toggle active" title="Toggle tournament 180 darts in Treble 20 to test shadowless lighting">
-          <span class="icon">🎯</span> 180 Darts
-        </button>
-        <button id="toggle-light-mode" class="btn btn-toggle active" title="Daylight is ON (Click to switch to Evening Lounge lighting)">
-          <span class="icon">☀️</span> <span id="light-toggle-label">Daylight ON</span>
-        </button>
+
+        <!-- Section 2: Lighting & Environment -->
+        <div class="control-section">
+          <div class="section-label">Lighting & Environment</div>
+          <div class="sidebar-toggle-list">
+            <button id="toggle-light-mode" class="btn btn-toggle active" title="Daylight is ON (Click to switch to Evening Lounge lighting)">
+              <span class="icon">☀️</span> <span id="light-toggle-label">Daylight ON</span>
+            </button>
+            <button id="toggle-ring-light" class="btn btn-toggle active" title="Toggle 360° Shadowless LED Ring Light">
+              <span class="icon">⭕</span> <span id="ring-light-toggle-label">Ring Light ON</span>
+            </button>
+            <div id="ring-dimmer-wrap" class="sidebar-dimmer-row" title="Adjust Ring Light Brightness">
+              <div class="dimmer-header">
+                <span class="dimmer-label">Ring Brightness</span>
+                <span id="dimmer-pct" class="dimmer-pct">100%</span>
+              </div>
+              <div class="dimmer-slider-wrap">
+                <span class="dimmer-icon">🔅</span>
+                <input type="range" id="ring-light-dimmer" min="0.2" max="1.5" step="0.05" value="1.0" class="mini-slider" aria-label="Ring Light Brightness">
+                <span class="dimmer-icon">🔆</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Hardware & Overlays -->
+        <div class="control-section">
+          <div class="section-label">Hardware & Overlays</div>
+          <div class="sidebar-toggle-list">
+            <button id="toggle-it2-rig" class="btn btn-toggle active" title="Toggle IT2 3-Camera Rig mounted around dartboard">
+              <span class="icon">📷</span> IT2 Ring Rig
+            </button>
+            <button id="toggle-darts" class="btn btn-toggle active" title="Toggle tournament 180 darts in Treble 20 to test shadowless lighting">
+              <span class="icon">🎯</span> 180 Darts
+            </button>
+            <button id="toggle-player" class="btn btn-toggle active" title="Toggle 3D player mannequin at the throw line">
+              <span class="icon">🧍</span> Player Dummy
+            </button>
+            <button id="toggle-dimensions" class="btn btn-toggle active" title="Toggle regulation measurement lines">
+              <span class="icon">📏</span> Dimension Guides
+            </button>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- Floating Pill Button when sidebar is collapsed -->
+    <button id="sidebar-expand-btn" class="sidebar-floating-toggle glass-card" title="Open Controls Menu" style="display: none;">
+      <span class="icon">🎮</span> Controls
+    </button>
   `;
 
   // Attach view preset events
@@ -78,6 +123,21 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
       const preset = btn.dataset.preset as any;
       sceneManager.setViewPreset(preset, true);
     });
+  });
+
+  // Sidebar Collapse / Expand toggle logic
+  const sidebar = container.querySelector<HTMLElement>('#hud-sidebar')!;
+  const collapseBtn = container.querySelector<HTMLButtonElement>('#sidebar-collapse-btn')!;
+  const expandBtn = container.querySelector<HTMLButtonElement>('#sidebar-expand-btn')!;
+
+  collapseBtn.addEventListener('click', () => {
+    sidebar.classList.add('collapsed');
+    expandBtn.style.display = 'inline-flex';
+  });
+
+  expandBtn.addEventListener('click', () => {
+    sidebar.classList.remove('collapsed');
+    expandBtn.style.display = 'none';
   });
 
   // Attach dimension toggle event
@@ -106,6 +166,7 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
   const ringLightLabel = toggleRingLightBtn.querySelector<HTMLSpanElement>('#ring-light-toggle-label')!;
   const ringDimmerWrap = container.querySelector<HTMLElement>('#ring-dimmer-wrap');
   const ringDimmer = container.querySelector<HTMLInputElement>('#ring-light-dimmer');
+  const dimmerPct = container.querySelector<HTMLSpanElement>('#dimmer-pct');
 
   const updateRingLightUI = (isOn: boolean) => {
     toggleRingLightBtn.classList.toggle('active', isOn);
@@ -128,6 +189,9 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
     ringDimmer.addEventListener('input', (e) => {
       const val = parseFloat((e.target as HTMLInputElement).value);
       sceneManager.setRingLightIntensity(val);
+      if (dimmerPct) {
+        dimmerPct.textContent = `${Math.round(val * 100)}%`;
+      }
     });
   }
 
