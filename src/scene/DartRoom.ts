@@ -135,7 +135,7 @@ export function createDartRoomGroup(): THREE.Group {
   // 8. Daylight Lighting Group (Bright sun + sky hemisphere light, toggled via light switch)
   const daylightGroup = new THREE.Group();
   daylightGroup.name = 'daylight-group';
-  daylightGroup.visible = false; // default evening mode
+  daylightGroup.visible = true; // default daylight mode
 
   const daylightHemi = new THREE.HemisphereLight(0xe2f0fc, 0xd8c8b4, 1.5);
   daylightHemi.name = 'daylight-hemi';
@@ -161,8 +161,8 @@ export function createDartRoomGroup(): THREE.Group {
   room.add(daylightGroup);
 
   // 9. Realistic Ambient & Physical Fixture Lighting Setup
-  // Indirect ambient bounce
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
+  // Indirect ambient bounce (0.75 for daylight mode)
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
   ambientLight.name = 'ambient-light';
   room.add(ambientLight);
 
@@ -362,15 +362,15 @@ function createWallLightSwitch(wallX: number, y: number, z: number): THREE.Group
   const rocker = new THREE.Mesh(rockerGeom, rockerMat);
   rocker.name = 'switch-rocker';
   rocker.position.set(wallX - 0.008, y, z);
-  // Default evening tilt: tilted slightly downward
-  rocker.rotation.z = -0.09;
+  // Default daylight tilt: tilted upward (ON)
+  rocker.rotation.z = 0.09;
   switchGroup.add(rocker);
 
-  // 4. Tiny LED indicator pip
+  // 4. Tiny LED indicator pip (green for active daylight)
   const indicatorMat = new THREE.MeshStandardMaterial({
-    color: 0xffaa00,
-    emissive: 0xff8800,
-    emissiveIntensity: 1.5,
+    color: 0x00ff88,
+    emissive: 0x00ff88,
+    emissiveIntensity: 2.0,
     roughness: 0.2
   });
   const indicatorGeom = new THREE.SphereGeometry(0.0025, 8, 8);
