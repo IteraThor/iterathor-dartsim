@@ -48,6 +48,9 @@ export function createIT2RingRigGroup(options: IT2RingRigOptions = {}): THREE.Gr
       model.traverse((child) => {
         if ((child as THREE.Mesh).isMesh) {
           const mesh = child as THREE.Mesh;
+          if (mesh.geometry) {
+            mesh.geometry.computeVertexNormals();
+          }
           mesh.material = rigMaterial;
           mesh.castShadow = true;
           mesh.receiveShadow = true;
