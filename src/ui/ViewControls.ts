@@ -46,6 +46,9 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
         <button id="toggle-player" class="btn btn-toggle active" title="Toggle 3D player mannequin at the throw line">
           <span class="icon">🧍</span> Player Dummy
         </button>
+        <button id="toggle-it2-rig" class="btn btn-toggle active" title="Toggle IT2 3-Camera Rig mounted around dartboard">
+          <span class="icon">📷</span> IT2 Ring Rig
+        </button>
         <button id="toggle-light-mode" class="btn btn-toggle" title="Toggle room lighting (Evening Lounge / Bright Daylight)">
           <span class="icon">💡</span> <span id="light-toggle-label">Daylight</span>
         </button>
@@ -76,6 +79,13 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
   togglePlayerBtn.addEventListener('click', () => {
     const isVisible = sceneManager.togglePlayerDummy();
     togglePlayerBtn.classList.toggle('active', isVisible);
+  });
+
+  // Attach IT2 rig toggle event
+  const toggleRigBtn = container.querySelector<HTMLButtonElement>('#toggle-it2-rig')!;
+  toggleRigBtn.addEventListener('click', () => {
+    const isVisible = sceneManager.toggleIT2Rig();
+    toggleRigBtn.classList.toggle('active', isVisible);
   });
 
   // Attach light mode toggle event (synced with 3D physical wall switch)
