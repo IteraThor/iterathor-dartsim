@@ -53,4 +53,38 @@ describe('IT2 Ring Rig Component', () => {
     expect(firstLight.intensity).toBeGreaterThan(0);
     expect(stripMat.emissiveIntensity).toBeGreaterThan(0);
   });
+
+  it('creates high-detail chassis ring, 3 standoff legs, and 3 optical camera pods', () => {
+    const rig = createIT2RingRigGroup();
+
+    // High-poly circular ring
+    const chassisRing = rig.getObjectByName('it2-chassis-ring') as THREE.Mesh;
+    expect(chassisRing).toBeDefined();
+    expect(chassisRing).toBeInstanceOf(THREE.Mesh);
+    expect(chassisRing.geometry.attributes.position.count).toBeGreaterThan(5000);
+
+    // Modular segment seams
+    const seams = rig.getObjectByName('it2-segment-seams');
+    expect(seams).toBeDefined();
+
+    // 3 Standoff legs with wall mounting shoes
+    for (let i = 0; i < 3; i++) {
+      const leg = rig.getObjectByName(`it2-leg-${i}`);
+      expect(leg).toBeDefined();
+      const shoe = rig.getObjectByName(`it2-shoe-${i}`);
+      expect(shoe).toBeDefined();
+      const strut = rig.getObjectByName(`it2-strut-${i}`);
+      expect(strut).toBeDefined();
+    }
+
+    // 3 Camera pods with optical lens elements
+    for (let i = 0; i < 3; i++) {
+      const camHead = rig.getObjectByName(`it2-camera-head-${i}`);
+      expect(camHead).toBeDefined();
+      const lensHood = rig.getObjectByName(`it2-lens-hood-${i}`);
+      expect(lensHood).toBeDefined();
+      const lensGlass = rig.getObjectByName(`it2-lens-glass-${i}`);
+      expect(lensGlass).toBeDefined();
+    }
+  });
 });
