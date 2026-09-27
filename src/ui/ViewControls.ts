@@ -62,8 +62,8 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
         <button id="toggle-darts" class="btn btn-toggle active" title="Toggle tournament 180 darts in Treble 20 to test shadowless lighting">
           <span class="icon">🎯</span> 180 Darts
         </button>
-        <button id="toggle-light-mode" class="btn btn-toggle" title="Toggle room lighting (Evening Lounge / Bright Daylight)">
-          <span class="icon">💡</span> <span id="light-toggle-label">Daylight</span>
+        <button id="toggle-light-mode" class="btn btn-toggle active" title="Daylight is ON (Click to switch to Evening Lounge lighting)">
+          <span class="icon">☀️</span> <span id="light-toggle-label">Daylight ON</span>
         </button>
       </div>
     </div>
@@ -160,6 +160,7 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
   });
 
   sceneManager.onDaylightChange(updateLightUI);
+  updateLightUI(sceneManager.isDaylight);
 
   return container;
 }

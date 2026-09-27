@@ -19,7 +19,7 @@ export class SceneManager {
   public it2RingRig: IT2RingRigGroup;
   public darts: THREE.Group;
 
-  public isDaylight = false;
+  public isDaylight = true;
   private daylightGroup: THREE.Group | null = null;
   private ambientLight: THREE.AmbientLight | null = null;
   private boardSpot: THREE.SpotLight | null = null;
@@ -49,7 +49,7 @@ export class SceneManager {
   constructor(container: HTMLElement) {
     // 1. Scene
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x090a0f);
+    this.scene.background = new THREE.Color(0x222834);
 
     // 2. Camera: 3/4 perspective overview showing floor, mat, and board
     const aspect = container.clientWidth / container.clientHeight;
@@ -99,6 +99,7 @@ export class SceneManager {
     this.scene.add(this.darts);
 
     this.updateBoardLighting();
+    this.toggleDaylight(true);
 
     // 6. Interactive Physical Light Switch raycasting on the right wall
     const dom = this.renderer.domElement;
