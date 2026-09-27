@@ -1,7 +1,19 @@
 import { SceneManager } from '../scene/SceneManager';
+import { AppSavedState } from '../state/AppState';
 
-export function setupViewControls(sceneManager: SceneManager): HTMLElement {
-  const container = document.createElement('div');
+export interface ViewControlsElement extends HTMLElement {
+  isSidebarCollapsed: () => boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  applyState: (state: AppSavedState) => void;
+  flashSaveIndicator: (isSaving?: boolean) => void;
+}
+
+export function setupViewControls(
+  sceneManager: SceneManager,
+  onStateChange?: () => void,
+  onReset?: () => void
+): ViewControlsElement {
+  const container = document.createElement('div') as unknown as ViewControlsElement;
   container.className = 'hud-overlay';
   container.innerHTML = `
     <div id="hud-sidebar" class="hud-sidebar glass-card">
@@ -80,6 +92,18 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
             </button>
           </div>
         </div>
+
+        <!-- Section 4: Auto-Save Status & Reset -->
+        <div class="control-section">
+          <div class="sidebar-footer-row">
+            <span class="save-status-indicator" id="save-status-indicator" title="Settings and camera angle auto-saved to browser storage">
+              <span class="save-dot"></span> <span id="save-status-text">Saved</span>
+            </span>
+            <button id="btn-reset-defaults" class="btn btn-reset" title="Reset all camera views and controls to regulation defaults">
+              <span class="icon">↺</span> Reset
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -97,7 +121,16 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
       btn.classList.add('active');
       const preset = btn.dataset.preset as any;
       sceneManager.setViewPreset(preset, true);
+      onStateChange?.();
     });
+  });
+
+  // Sync preset active button when sceneManager preset changes or resets
+  sceneManager.onPresetChange((preset) => {
+    presetButtons.forEach(b => {
+      b.classList.toggle('active', b.dataset.preset === preset);
+    });
+    onStateChange?.();
   });
 
   // Sidebar Collapse / Expand toggle logic
@@ -105,14 +138,19 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
   const collapseBtn = container.querySelector<HTMLButtonElement>('#sidebar-collapse-btn')!;
   const expandBtn = container.querySelector<HTMLButtonElement>('#sidebar-expand-btn')!;
 
+  const setSidebarCollapsed = (collapsed: boolean) => {
+    sidebar.classList.toggle('collapsed', collapsed);
+    expandBtn.style.display = collapsed ? 'inline-flex' : 'none';
+  };
+
   collapseBtn.addEventListener('click', () => {
-    sidebar.classList.add('collapsed');
-    expandBtn.style.display = 'inline-flex';
+    setSidebarCollapsed(true);
+    onStateChange?.();
   });
 
   expandBtn.addEventListener('click', () => {
-    sidebar.classList.remove('collapsed');
-    expandBtn.style.display = 'none';
+    setSidebarCollapsed(false);
+    onStateChange?.();
   });
 
   // Attach dimension toggle event
@@ -120,6 +158,7 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
   toggleDimBtn.addEventListener('click', () => {
     const isVisible = sceneManager.toggleDimensions();
     toggleDimBtn.classList.toggle('active', isVisible);
+    onStateChange?.();
   });
 
   // Attach player dummy toggle event
@@ -127,6 +166,7 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
   togglePlayerBtn.addEventListener('click', () => {
     const isVisible = sceneManager.togglePlayerDummy();
     togglePlayerBtn.classList.toggle('active', isVisible);
+    onStateChange?.();
   });
 
   // Attach IT2 rig toggle event
@@ -134,6 +174,7 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
   toggleRigBtn.addEventListener('click', () => {
     const isVisible = sceneManager.toggleIT2Rig();
     toggleRigBtn.classList.toggle('active', isVisible);
+    onStateChange?.();
   });
 
   // Attach 360° Ring Light toggle event & dimmer
@@ -157,6 +198,7 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
 
   toggleRingLightBtn.addEventListener('click', () => {
     sceneManager.toggleRingLight();
+    onStateChange?.();
   });
   sceneManager.onRingLightChange(updateRingLightUI);
 
@@ -167,6 +209,7 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
       if (dimmerPct) {
         dimmerPct.textContent = `${Math.round(val * 100)}%`;
       }
+      onStateChange?.();
     });
   }
 
@@ -175,6 +218,7 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
   toggleDartsBtn.addEventListener('click', () => {
     const hasDarts = sceneManager.toggleDarts();
     toggleDartsBtn.classList.toggle('active', hasDarts);
+    onStateChange?.();
   });
   sceneManager.onDartsChange((hasDarts) => {
     toggleDartsBtn.classList.toggle('active', hasDarts);
@@ -196,10 +240,62 @@ export function setupViewControls(sceneManager: SceneManager): HTMLElement {
 
   toggleLightBtn.addEventListener('click', () => {
     sceneManager.toggleDaylight();
+    onStateChange?.();
   });
 
   sceneManager.onDaylightChange(updateLightUI);
   updateLightUI(sceneManager.isDaylight);
+
+  // Reset to Defaults Button
+  const resetBtn = container.querySelector<HTMLButtonElement>('#btn-reset-defaults')!;
+  resetBtn.addEventListener('click', () => {
+    onReset?.();
+  });
+
+  // Save Status Indicator
+  const saveIndicator = container.querySelector<HTMLElement>('#save-status-indicator')!;
+  const saveText = container.querySelector<HTMLSpanElement>('#save-status-text')!;
+  let saveTimer: number | undefined;
+
+  const flashSaveIndicator = (isSaving = false) => {
+    if (!saveIndicator || !saveText) return;
+    if (saveTimer) window.clearTimeout(saveTimer);
+
+    if (isSaving) {
+      saveIndicator.classList.add('saving');
+      saveText.textContent = 'Saving...';
+    } else {
+      saveIndicator.classList.remove('saving');
+      saveText.textContent = 'Saved';
+    }
+  };
+
+  // Attach controller methods to container
+  container.isSidebarCollapsed = () => sidebar.classList.contains('collapsed');
+  container.setSidebarCollapsed = setSidebarCollapsed;
+  container.flashSaveIndicator = flashSaveIndicator;
+
+  container.applyState = (state: AppSavedState) => {
+    toggleDimBtn.classList.toggle('active', state.controls.isDimensionGuidesVisible);
+    togglePlayerBtn.classList.toggle('active', state.controls.isPlayerDummyVisible);
+    toggleRigBtn.classList.toggle('active', state.controls.isIT2RigVisible);
+    toggleDartsBtn.classList.toggle('active', state.controls.is180DartsVisible);
+    updateRingLightUI(state.controls.isRingLight);
+    updateLightUI(state.controls.isDaylight);
+
+    if (ringDimmer) {
+      ringDimmer.value = state.controls.ringLightIntensity.toString();
+    }
+    if (dimmerPct) {
+      dimmerPct.textContent = `${Math.round(state.controls.ringLightIntensity * 100)}%`;
+    }
+
+    setSidebarCollapsed(state.controls.isSidebarCollapsed);
+
+    presetButtons.forEach(b => {
+      b.classList.toggle('active', b.dataset.preset === state.camera.preset);
+    });
+  };
 
   return container;
 }
