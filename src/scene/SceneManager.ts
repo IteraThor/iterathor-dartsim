@@ -202,15 +202,31 @@ export class SceneManager {
             this.controls.enabled = false; // Suspend OrbitControls while directly dragging orb
             this.initialGazeTarget.copy(this.controls.target); // Remember original gaze orientation
 
-            // Camera-facing drag plane through current orb target
+            // Determine drag plane:
+            // When viewing from an elevated/downward perspective, drag horizontally across the room
+            // parallel to the floor so the orb maintains its height (elevation Y) constant.
+            // When viewing from a near-horizontal angle (e.g. side elevation or player eye-level),
+            // drag perpendicular to the camera gaze.
+            const camDir = new THREE.Vector3();
+            this.camera.getWorldDirection(camDir);
+
             const normal = new THREE.Vector3();
-            this.camera.getWorldDirection(normal).negate();
+            if (Math.abs(camDir.y) > 0.15) {
+              normal.set(0, 1, 0); // Horizontal room plane at Y = controls.target.y
+            } else {
+              normal.copy(camDir).negate(); // View-aligned plane
+            }
             this.orbDragPlane.setFromNormalAndCoplanarPoint(normal, this.controls.target);
 
             this.mouse.x = (clientX / rect.width) * 2 - 1;
             this.mouse.y = -(clientY / rect.height) * 2 + 1;
             this.raycaster.setFromCamera(this.mouse, this.camera);
-            this.raycaster.ray.intersectPlane(this.orbDragPlane, this.orbDragLastPoint);
+            if (!this.raycaster.ray.intersectPlane(this.orbDragPlane, this.orbDragLastPoint)) {
+              // Fallback to camera-facing plane if horizontal plane ray misses
+              const fallbackNormal = camDir.clone().negate();
+              this.orbDragPlane.setFromNormalAndCoplanarPoint(fallbackNormal, this.controls.target);
+              this.raycaster.ray.intersectPlane(this.orbDragPlane, this.orbDragLastPoint);
+            }
             dom.style.cursor = 'grabbing';
             return;
           }
@@ -749,7 +765,10 @@ export class SceneManager {
 
         const sphere = this.pivotOrb.getObjectByName('pivot-orb-sphere') as THREE.Mesh;
         if (sphere) {
-          const targetScale = this.isDraggingOrb ? 1.35 : 1.0;
+          const dist = this.camera.position.distanceTo(this.controls.target);
+          // Scale proportionally with distance so the orb maintains a constant comfortable screen size
+          const baseScale = dist / 3.65;
+          const targetScale = (this.isDraggingOrb ? 1.3 : 1.0) * baseScale;
           sphere.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.25);
         }
       }
