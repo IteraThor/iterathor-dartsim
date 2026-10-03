@@ -7,6 +7,7 @@ import { createDimensionGuidesGroup } from './DimensionGuides';
 import { createPlayerDummyGroup } from './PlayerDummy';
 import { createIT2RingRigGroup, IT2RingRigGroup } from './IT2RingRig';
 import { createDartsGroup } from './Darts';
+import { createPivotOrbGroup, createStandingMarkerGroup } from './PivotMarker';
 import { DARTS_DIMENSIONS } from '../constants/dartsDimensions';
 
 export class SceneManager {
@@ -18,6 +19,8 @@ export class SceneManager {
   public playerDummy: THREE.Group;
   public it2RingRig: IT2RingRigGroup;
   public darts: THREE.Group;
+  public pivotOrb: THREE.Group;
+  public standingMarker: THREE.Group;
 
   public isDaylight = true;
   private daylightGroup: THREE.Group | null = null;
@@ -144,6 +147,12 @@ export class SceneManager {
 
     this.darts = createDartsGroup();
     this.scene.add(this.darts);
+
+    this.pivotOrb = createPivotOrbGroup();
+    this.scene.add(this.pivotOrb);
+
+    this.standingMarker = createStandingMarkerGroup();
+    this.scene.add(this.standingMarker);
 
     this.updateBoardLighting();
     this.toggleDaylight(true);
@@ -573,9 +582,33 @@ export class SceneManager {
         this.controls.update();
       }
 
+      // Update floating pivot orb position to match rotation center
+      if (this.pivotOrb.visible) {
+        this.pivotOrb.position.copy(this.controls.target);
+        const floorSpot = this.pivotOrb.getObjectByName('pivot-orb-floor');
+        if (floorSpot) {
+          floorSpot.position.y = -this.controls.target.y + 0.002;
+        }
+      }
+
+      // Update standing floor marker to match camera position and facing direction
+      if (this.standingMarker.visible) {
+        this.standingMarker.position.set(this.camera.position.x, 0, this.camera.position.z);
+        const forwardDir = new THREE.Vector3();
+        this.camera.getWorldDirection(forwardDir);
+        this.standingMarker.rotation.y = Math.atan2(forwardDir.x, forwardDir.z);
+      }
+
       this.renderer.render(this.scene, this.camera);
     };
     requestAnimationFrame(animate);
+  }
+
+  public togglePivotOrb(visible?: boolean): boolean {
+    const isVisible = visible !== undefined ? visible : !this.pivotOrb.visible;
+    this.pivotOrb.visible = isVisible;
+    this.standingMarker.visible = isVisible;
+    return isVisible;
   }
 
   public stop(): void {

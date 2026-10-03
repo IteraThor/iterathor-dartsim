@@ -66,6 +66,9 @@ export function setupViewControls(
           <button id="toggle-dimensions" class="btn btn-toggle active" title="Toggle Regulation Dimension Lines">
             <span class="icon">📏</span> Guides
           </button>
+          <button id="toggle-pivot-orb" class="btn btn-toggle active" title="Toggle Floating Pivot Orb & Standing Position Marker">
+            <span class="icon">🔮</span> Orb
+          </button>
           <button id="btn-reset-defaults" class="btn btn-reset" title="Reset all to defaults">
             <span class="icon">↺</span> Reset
           </button>
@@ -182,6 +185,7 @@ export function setupViewControls(
     ['toggle-dimensions', () => sceneManager.toggleDimensions()],
     ['toggle-player', () => sceneManager.togglePlayerDummy()],
     ['toggle-it2-rig', () => sceneManager.toggleIT2Rig()],
+    ['toggle-pivot-orb', () => sceneManager.togglePivotOrb()],
   ];
   const toggleBtns = new Map<string, HTMLButtonElement>();
   toggleMap.forEach(([id, toggleFn]) => {
@@ -270,6 +274,7 @@ export function setupViewControls(
     toggleBtns.get('toggle-dimensions')?.classList.toggle('active', state.controls.isDimensionGuidesVisible);
     toggleBtns.get('toggle-player')?.classList.toggle('active', state.controls.isPlayerDummyVisible);
     toggleBtns.get('toggle-it2-rig')?.classList.toggle('active', state.controls.isIT2RigVisible);
+    toggleBtns.get('toggle-pivot-orb')?.classList.toggle('active', sceneManager.pivotOrb.visible);
     toggleDartsBtn.classList.toggle('active', state.controls.is180DartsVisible);
     updateRingLightUI(state.controls.isRingLight);
     updateLightUI(state.controls.isDaylight);
