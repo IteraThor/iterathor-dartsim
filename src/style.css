@@ -448,3 +448,318 @@ body, html {
     transform: none;
   }
 }
+
+/* -------------------------------------------------------------
+ * Custom Camera Picture-in-Picture (PiP) Floating Window
+ * ------------------------------------------------------------- */
+.pip-window {
+  position: fixed;
+  top: 76px;
+  right: 18px;
+  width: 290px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(0, 229, 255, 0.2);
+  user-select: none;
+  touch-action: none;
+  transition: box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.pip-window.hidden {
+  display: none !important;
+}
+
+.pip-window.dragging {
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8), 0 0 0 2px var(--accent-cyan);
+}
+
+.pip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(15, 23, 42, 0.88);
+  border-bottom: 1px solid var(--panel-border);
+  border-radius: 12px 12px 0 0;
+  cursor: grab;
+}
+
+.pip-header:active {
+  cursor: grabbing;
+}
+
+.pip-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.pip-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: pulse-red 2s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.pip-title-text {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.pip-coord-badge {
+  font-size: 0.65rem;
+  color: var(--accent-cyan);
+  background: rgba(0, 229, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  white-space: nowrap;
+  font-family: monospace;
+}
+
+.pip-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pip-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--panel-border);
+  color: var(--text-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.15s ease;
+}
+
+.pip-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.pip-btn-close:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.pip-body {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pip-body.hidden {
+  display: none !important;
+}
+
+.pip-viewport-wrapper {
+  width: 100%;
+  position: relative;
+  background: #090a0f;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  overflow: hidden;
+}
+
+.pip-viewport-frame {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  position: relative;
+  pointer-events: none;
+}
+
+.pip-overlay-crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.pip-overlay-crosshair::before,
+.pip-overlay-crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(0, 229, 255, 0.6);
+}
+
+.pip-overlay-crosshair::before {
+  top: 0; left: 8px; width: 2px; height: 18px;
+}
+
+.pip-overlay-crosshair::after {
+  top: 8px; left: 0; width: 18px; height: 2px;
+}
+
+.pip-badge-top-left,
+.pip-badge-top-right,
+.pip-badge-bottom {
+  position: absolute;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 5px;
+  border-radius: 3px;
+  pointer-events: none;
+  background: rgba(9, 10, 15, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.pip-badge-top-left {
+  top: 6px;
+  left: 6px;
+  color: #ef4444;
+}
+
+.pip-badge-top-right {
+  top: 6px;
+  right: 6px;
+  color: var(--text-muted);
+}
+
+.pip-badge-bottom {
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--accent-cyan);
+  white-space: nowrap;
+}
+
+.pip-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-pip-action {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: rgba(0, 229, 255, 0.12);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  color: var(--accent-cyan);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-pip-action:hover {
+  background: rgba(0, 229, 255, 0.22);
+  border-color: var(--accent-cyan);
+  color: #fff;
+}
+
+.pip-coords-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.coord-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.coord-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.coord-axis {
+  font-size: 0.7rem;
+  font-weight: 800;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  color: #000;
+}
+
+.axis-x { background: #f87171; }
+.axis-y { background: #4ade80; }
+.axis-z { background: #60a5fa; }
+
+.coord-desc {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.coord-input-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.coord-input {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: #fff;
+  font-family: monospace;
+  font-size: 0.82rem;
+  padding: 4px 6px;
+  text-align: center;
+  min-width: 0;
+}
+
+.coord-input:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.2);
+}
+
+.coord-step-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--panel-border);
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  min-width: 32px;
+}
+
+.coord-step-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}

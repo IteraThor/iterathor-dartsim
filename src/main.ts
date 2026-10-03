@@ -1,5 +1,6 @@
 import { SceneManager } from './scene/SceneManager';
 import { setupViewControls } from './ui/ViewControls';
+import { CustomCameraPiP } from './ui/CustomCameraPiP';
 import {
   loadSavedState,
   saveState,
@@ -69,6 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const hudElement = setupViewControls(sceneManager, triggerAutoSave, handleReset);
   appElement.appendChild(hudElement);
+
+  // Mount Floating Custom Camera Picture-in-Picture window
+  new CustomCameraPiP(appElement, sceneManager);
 
   // Load and restore previous session state if available
   const saved = loadSavedState();
