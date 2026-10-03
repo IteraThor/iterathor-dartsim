@@ -107,7 +107,8 @@ export class SceneManager {
       TWO: THREE.TOUCH.DOLLY_PAN
     };
     this.controls.target.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS * 0.6, 1.1);
-    this.controls.maxPolarAngle = Math.PI / 2 - 0.02; // prevent camera going below floor
+    this.controls.minPolarAngle = 0.02;
+    this.controls.maxPolarAngle = Math.PI - 0.02; // Full vertical range: look up from low level to ceiling
     this.controls.minDistance = 0.2;
     this.controls.maxDistance = 10.0;
 
@@ -429,8 +430,8 @@ export class SceneManager {
     spherical.theta -= deltaTheta;
     spherical.phi -= deltaPhi;
 
-    // Clamp polar angle so you can look up/down without inverting or flipping
-    spherical.phi = THREE.MathUtils.clamp(spherical.phi, 0.05, Math.PI - 0.05);
+    // Clamp polar angle so you can look fully up to ceiling or down to floor
+    spherical.phi = THREE.MathUtils.clamp(spherical.phi, 0.02, Math.PI - 0.02);
     spherical.makeSafe();
 
     lookDir.setFromSpherical(spherical);
