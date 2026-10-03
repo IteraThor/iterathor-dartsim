@@ -96,9 +96,7 @@ export class SceneManager {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
-    this.controls.enablePan = true;
-    this.controls.screenSpacePanning = true;
-    this.controls.panSpeed = 1.0;
+    this.controls.enablePan = false;
     this.controls.touches = {
       ONE: THREE.TOUCH.ROTATE,
       TWO: THREE.TOUCH.DOLLY_PAN
