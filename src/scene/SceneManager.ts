@@ -74,6 +74,12 @@ export class SceneManager {
   private moveEndCallbacks: (() => void)[] = [];
   private pivotOrbCallbacks: ((visible: boolean) => void)[] = [];
 
+  // Direct touch/pointer dragging of the floating orb in the room
+  private isDraggingOrb = false;
+  private orbDragPointerId: number | null = null;
+  private orbDragPlane = new THREE.Plane();
+  private orbDragLastPoint = new THREE.Vector3();
+
   // Smooth camera transition state
   private isTransitioning = false;
   private transitionStart = 0;
@@ -107,7 +113,8 @@ export class SceneManager {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
-    this.controls.enablePan = false; // Panning disabled so controls stay centered on the orb
+    this.controls.enablePan = true;
+    this.controls.screenSpacePanning = true;
     this.controls.enableRotate = true;
     this.controls.mouseButtons = {
       LEFT: THREE.MOUSE.ROTATE,
@@ -166,14 +173,89 @@ export class SceneManager {
     this.updateBoardLighting();
     this.toggleDaylight(true);
 
-    // 6. Interactive Light Switch raycasting
+    // 6. Interactive Direct Orb Dragging & Light Switch raycasting
     const dom = this.renderer.domElement;
 
     dom.addEventListener('pointerdown', (e: PointerEvent) => {
       this.pointerDownPos.set(e.clientX, e.clientY);
+
+      // Check if user touched the pivot orb to directly drag it across the room
+      if (this.pivotOrb.visible) {
+        const rect = dom.getBoundingClientRect();
+        this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        const orbHits = this.raycaster.intersectObject(this.pivotOrb, true);
+        if (orbHits.length > 0) {
+          this.isDraggingOrb = true;
+          this.orbDragPointerId = e.pointerId;
+          this.controls.enabled = false; // Suspend OrbitControls while directly dragging orb
+
+          // Camera-facing drag plane through current orb target
+          const normal = new THREE.Vector3();
+          this.camera.getWorldDirection(normal).negate();
+          this.orbDragPlane.setFromNormalAndCoplanarPoint(normal, this.controls.target);
+          this.raycaster.ray.intersectPlane(this.orbDragPlane, this.orbDragLastPoint);
+          dom.style.cursor = 'grabbing';
+        }
+      }
     });
 
-    dom.addEventListener('pointerup', (e: PointerEvent) => {
+    dom.addEventListener('pointermove', (e: PointerEvent) => {
+      const rect = dom.getBoundingClientRect();
+      this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      this.raycaster.setFromCamera(this.mouse, this.camera);
+
+      // Handle direct orb dragging across the room
+      if (this.isDraggingOrb && e.pointerId === this.orbDragPointerId) {
+        const currentPoint = new THREE.Vector3();
+        if (this.raycaster.ray.intersectPlane(this.orbDragPlane, currentPoint)) {
+          const delta = new THREE.Vector3().subVectors(currentPoint, this.orbDragLastPoint);
+          this.controls.target.add(delta);
+          this.camera.position.add(delta);
+
+          // Boundaries to keep orb and camera inside the darts room
+          this.controls.target.x = THREE.MathUtils.clamp(this.controls.target.x, -2.4, 2.4);
+          this.controls.target.y = THREE.MathUtils.clamp(this.controls.target.y, 0.1, 2.85);
+          this.controls.target.z = THREE.MathUtils.clamp(this.controls.target.z, 0.05, 5.8);
+
+          this.camera.position.x = THREE.MathUtils.clamp(this.camera.position.x, -2.65, 2.65);
+          this.camera.position.y = THREE.MathUtils.clamp(this.camera.position.y, 0.05, 3.05);
+          this.camera.position.z = THREE.MathUtils.clamp(this.camera.position.z, -0.01, 6.2);
+
+          this.orbDragLastPoint.copy(currentPoint);
+          this.controls.update();
+
+          if (this.currentPreset !== null) {
+            this.currentPreset = null;
+            this.presetCallbacks.forEach(cb => cb(null));
+          }
+        }
+        return;
+      }
+
+      if (e.pointerType === 'mouse') {
+        if (this.pivotOrb.visible && this.raycaster.intersectObject(this.pivotOrb, true).length > 0) {
+          dom.style.cursor = 'grab';
+        } else if (this.wallLightSwitch && this.raycaster.intersectObjects(this.wallLightSwitch.children, true).length > 0) {
+          dom.style.cursor = 'pointer';
+        } else {
+          dom.style.cursor = 'default';
+        }
+      }
+    });
+
+    const stopOrbDrag = (e: PointerEvent) => {
+      if (this.isDraggingOrb && e.pointerId === this.orbDragPointerId) {
+        this.isDraggingOrb = false;
+        this.orbDragPointerId = null;
+        this.controls.enabled = true;
+        dom.style.cursor = 'default';
+        this.moveEndCallbacks.forEach(cb => cb());
+        return;
+      }
+
       const dist = Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y);
       if (dist < 15) { // Click/tap on switch
         const rect = dom.getBoundingClientRect();
@@ -187,22 +269,10 @@ export class SceneManager {
           }
         }
       }
-    });
+    };
 
-    dom.addEventListener('pointermove', (e: PointerEvent) => {
-      const rect = dom.getBoundingClientRect();
-      this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      this.raycaster.setFromCamera(this.mouse, this.camera);
-      if (this.wallLightSwitch && e.pointerType === 'mouse') {
-        const intersects = this.raycaster.intersectObjects(this.wallLightSwitch.children, true);
-        if (intersects.length > 0) {
-          dom.style.cursor = 'pointer';
-        } else if (dom.style.cursor === 'pointer') {
-          dom.style.cursor = 'grab';
-        }
-      }
-    });
+    dom.addEventListener('pointerup', stopOrbDrag);
+    dom.addEventListener('pointercancel', stopOrbDrag);
 
     // 7. Resize listener
     window.addEventListener('resize', this.onWindowResize);
@@ -639,10 +709,10 @@ export class SceneManager {
           posAttr.needsUpdate = true;
         }
 
-        const aura = this.pivotOrb.getObjectByName('pivot-orb-aura');
-        if (aura) {
-          const scale = 1.0 + 0.18 * Math.sin(time * 0.004);
-          aura.scale.set(scale, scale, scale);
+        const sphere = this.pivotOrb.getObjectByName('pivot-orb-sphere') as THREE.Mesh;
+        if (sphere) {
+          const targetScale = this.isDraggingOrb ? 1.35 : 1.0;
+          sphere.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.25);
         }
       }
 
