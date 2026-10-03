@@ -113,8 +113,7 @@ export class SceneManager {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
-    this.controls.enablePan = true;
-    this.controls.screenSpacePanning = true;
+    this.controls.enablePan = false; // Panning disabled so background touch strictly orbits around orb
     this.controls.enableRotate = true;
     this.controls.mouseButtons = {
       LEFT: THREE.MOUSE.ROTATE,
@@ -179,24 +178,39 @@ export class SceneManager {
     dom.addEventListener('pointerdown', (e: PointerEvent) => {
       this.pointerDownPos.set(e.clientX, e.clientY);
 
-      // Check if user touched the pivot orb to directly drag it across the room
+      // Check if user touched directly on the pivot orb to drag it across the room
       if (this.pivotOrb.visible) {
         const rect = dom.getBoundingClientRect();
-        this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-        this.raycaster.setFromCamera(this.mouse, this.camera);
-        const orbHits = this.raycaster.intersectObject(this.pivotOrb, true);
-        if (orbHits.length > 0) {
-          this.isDraggingOrb = true;
-          this.orbDragPointerId = e.pointerId;
-          this.controls.enabled = false; // Suspend OrbitControls while directly dragging orb
+        const clientX = e.clientX - rect.left;
+        const clientY = e.clientY - rect.top;
 
-          // Camera-facing drag plane through current orb target
-          const normal = new THREE.Vector3();
-          this.camera.getWorldDirection(normal).negate();
-          this.orbDragPlane.setFromNormalAndCoplanarPoint(normal, this.controls.target);
-          this.raycaster.ray.intersectPlane(this.orbDragPlane, this.orbDragLastPoint);
-          dom.style.cursor = 'grabbing';
+        // Project orb's 3D position to 2D screen coordinates
+        const orbScreen = this.controls.target.clone().project(this.camera);
+
+        // Orb must be in front of the camera
+        if (orbScreen.z < 1.0) {
+          const orbPixelX = ((orbScreen.x + 1) / 2) * rect.width;
+          const orbPixelY = ((-orbScreen.y + 1) / 2) * rect.height;
+          const touchRadius = Math.hypot(clientX - orbPixelX, clientY - orbPixelY);
+
+          // Strictly require touching directly on the orb (within 35px radius)
+          if (touchRadius <= 35) {
+            this.isDraggingOrb = true;
+            this.orbDragPointerId = e.pointerId;
+            this.controls.enabled = false; // Suspend OrbitControls while directly dragging orb
+
+            // Camera-facing drag plane through current orb target
+            const normal = new THREE.Vector3();
+            this.camera.getWorldDirection(normal).negate();
+            this.orbDragPlane.setFromNormalAndCoplanarPoint(normal, this.controls.target);
+
+            this.mouse.x = (clientX / rect.width) * 2 - 1;
+            this.mouse.y = -(clientY / rect.height) * 2 + 1;
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            this.raycaster.ray.intersectPlane(this.orbDragPlane, this.orbDragLastPoint);
+            dom.style.cursor = 'grabbing';
+            return;
+          }
         }
       }
     });
@@ -236,9 +250,19 @@ export class SceneManager {
       }
 
       if (e.pointerType === 'mouse') {
-        if (this.pivotOrb.visible && this.raycaster.intersectObject(this.pivotOrb, true).length > 0) {
-          dom.style.cursor = 'grab';
-        } else if (this.wallLightSwitch && this.raycaster.intersectObjects(this.wallLightSwitch.children, true).length > 0) {
+        if (this.pivotOrb.visible) {
+          const orbScreen = this.controls.target.clone().project(this.camera);
+          if (orbScreen.z < 1.0) {
+            const orbPixelX = ((orbScreen.x + 1) / 2) * rect.width;
+            const orbPixelY = ((-orbScreen.y + 1) / 2) * rect.height;
+            const touchRadius = Math.hypot((e.clientX - rect.left) - orbPixelX, (e.clientY - rect.top) - orbPixelY);
+            if (touchRadius <= 25) {
+              dom.style.cursor = 'grab';
+              return;
+            }
+          }
+        }
+        if (this.wallLightSwitch && this.raycaster.intersectObjects(this.wallLightSwitch.children, true).length > 0) {
           dom.style.cursor = 'pointer';
         } else {
           dom.style.cursor = 'default';

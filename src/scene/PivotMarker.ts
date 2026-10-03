@@ -44,15 +44,6 @@ export function createPivotOrbGroup(): THREE.Group {
   line.name = 'pivot-orb-line';
   group.add(line);
 
-  // 4. Generous invisible touch hitbox for effortless mobile grabbing
-  const hitboxGeom = new THREE.SphereGeometry(0.18, 16, 16);
-  const hitboxMat = new THREE.MeshBasicMaterial({
-    visible: false
-  });
-  const hitbox = new THREE.Mesh(hitboxGeom, hitboxMat);
-  hitbox.name = 'pivot-orb-hitbox';
-  group.add(hitbox);
-
   return group;
 }
 
