@@ -457,6 +457,7 @@ body, html {
   top: 76px;
   right: 18px;
   width: 290px;
+  max-width: calc(100vw - 20px);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -465,6 +466,15 @@ body, html {
   user-select: none;
   touch-action: none;
   transition: box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+@media (max-width: 480px) {
+  .pip-window {
+    top: auto;
+    bottom: 170px;
+    right: 10px;
+    width: 250px;
+  }
 }
 
 .pip-window.hidden {

@@ -65,7 +65,7 @@ export class CustomCameraPiP {
             <div class="pip-overlay-crosshair"></div>
             <div class="pip-badge-top-left">CAM 1</div>
             <div class="pip-badge-top-right">FOV 55°</div>
-            <div class="pip-badge-bottom">AIM: BULLSEYE (0, 0, 0)</div>
+            <div class="pip-badge-bottom" id="pip-aim-badge">AIM: 🔮 ORB</div>
           </div>
         </div>
 
@@ -174,11 +174,13 @@ export class CustomCameraPiP {
   }
 
   private setupEvents(): void {
-    // Snap to Orb button
     const snapBtn = this.windowEl.querySelector('#btn-snap-to-orb');
+    const aimBadge = this.windowEl.querySelector('#pip-aim-badge') as HTMLElement;
+
     snapBtn?.addEventListener('click', () => {
       const coords = this.sceneManager.placeCustomCameraAtOrb();
       this.updateInputs(coords);
+      if (aimBadge) aimBadge.textContent = 'AIM: 🎯 BULLSEYE';
     });
 
     // Inputs direct change
@@ -189,6 +191,7 @@ export class CustomCameraPiP {
 
       this.sceneManager.getCustomCameraRig().setCoordsMm({ x, y, z });
       this.updateBadge({ x, y, z });
+      if (aimBadge) aimBadge.textContent = 'AIM: 🔮 ORB';
     };
 
     this.inputX.addEventListener('input', onInputChange);

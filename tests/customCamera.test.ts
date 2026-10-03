@@ -32,8 +32,9 @@ describe('Custom Camera Bullseye Coordinates', () => {
     expect(roundtrip.z).toBe(1200);
   });
 
-  it('creates custom camera rig with correct camera orientation aiming at bullseye', () => {
-    const rig = new CustomCameraRig({ x: 400, y: 150, z: 1500 });
+  it('creates custom camera rig with correct camera orientation aiming at target', () => {
+    const orbTarget = new THREE.Vector3(0, 1.036, 1.1);
+    const rig = new CustomCameraRig({ x: 400, y: 150, z: 1500 }, orbTarget);
     expect(rig.camera).toBeDefined();
     expect(rig.group).toBeDefined();
 

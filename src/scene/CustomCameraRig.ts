@@ -37,9 +37,12 @@ export class CustomCameraRig {
   private aimTarget: THREE.Vector3;
   private coordsMm: BullseyeCoordsMm;
 
-  constructor(initialCoordsMm: BullseyeCoordsMm = { x: 350, y: 150, z: 1200 }) {
+  constructor(
+    initialCoordsMm: BullseyeCoordsMm = { x: 350, y: 150, z: 1200 },
+    initialAimTarget: THREE.Vector3 = new THREE.Vector3(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS * 0.6, 1.1)
+  ) {
     this.coordsMm = { ...initialCoordsMm };
-    this.aimTarget = new THREE.Vector3(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS, 0);
+    this.aimTarget = initialAimTarget.clone();
 
     // 1. Secondary Perspective Camera for Live PiP Feed
     // 16:9 aspect ratio, 55° field of view (typical wide webcam/action cam lens)
@@ -144,13 +147,18 @@ export class CustomCameraRig {
   private updatePositionAndAim(): void {
     const worldPos = bullseyeMmToWorld(this.coordsMm);
 
+    // If camera is placed right at the target, aim forward towards the Bullseye
+    const effectiveAim = worldPos.distanceTo(this.aimTarget) < 0.05
+      ? new THREE.Vector3(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS, 0)
+      : this.aimTarget;
+
     // Position camera
     this.camera.position.copy(worldPos);
-    this.camera.lookAt(this.aimTarget);
+    this.camera.lookAt(effectiveAim);
 
     // Position 3D model
     this.group.position.copy(worldPos);
-    this.group.lookAt(this.aimTarget);
+    this.group.lookAt(effectiveAim);
   }
 
   public setVisible(visible: boolean): void {
