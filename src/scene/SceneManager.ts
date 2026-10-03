@@ -168,6 +168,7 @@ export class SceneManager {
     this.scene.add(this.pivotOrb);
 
     this.standingMarker = createStandingMarkerGroup();
+    this.standingMarker.visible = false;
     this.scene.add(this.standingMarker);
 
     this.updateBoardLighting();
@@ -774,7 +775,6 @@ export class SceneManager {
   public togglePivotOrb(visible?: boolean): boolean {
     const isVisible = visible !== undefined ? visible : !this.pivotOrb.visible;
     this.pivotOrb.visible = isVisible;
-    this.standingMarker.visible = isVisible;
     this.pivotOrbCallbacks.forEach(cb => cb(isVisible));
     return isVisible;
   }
