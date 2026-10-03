@@ -589,6 +589,19 @@ export class SceneManager {
         if (floorSpot) {
           floorSpot.position.y = -this.controls.target.y + 0.002;
         }
+
+        const line = this.pivotOrb.getObjectByName('pivot-orb-line') as THREE.Line;
+        if (line && line.geometry.attributes.position) {
+          const posAttr = line.geometry.attributes.position;
+          posAttr.setXYZ(1, 0, -this.controls.target.y, 0);
+          posAttr.needsUpdate = true;
+        }
+
+        const aura = this.pivotOrb.getObjectByName('pivot-orb-aura');
+        if (aura) {
+          const scale = 1.0 + 0.18 * Math.sin(time * 0.004);
+          aura.scale.set(scale, scale, scale);
+        }
       }
 
       // Update standing floor marker to match camera position and facing direction
@@ -597,6 +610,11 @@ export class SceneManager {
         const forwardDir = new THREE.Vector3();
         this.camera.getWorldDirection(forwardDir);
         this.standingMarker.rotation.y = Math.atan2(forwardDir.x, forwardDir.z);
+
+        const diamond = this.standingMarker.getObjectByName('standing-diamond');
+        if (diamond) {
+          diamond.rotation.y = time * 0.002;
+        }
       }
 
       this.renderer.render(this.scene, this.camera);
