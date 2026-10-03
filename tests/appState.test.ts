@@ -61,7 +61,36 @@ describe('AppState Persistence Module', () => {
     expect(loaded?.camera.preset).toBe('oche');
     expect(loaded?.controls.isDaylight).toBe(false);
     expect(loaded?.controls.ringLightIntensity).toBe(0.8);
+    expect(loaded?.controls.isDimensionGuidesVisible).toBe(false);
     expect(loaded?.controls.isSidebarCollapsed).toBe(true);
+  });
+
+  it('has dimension guides disabled by default in DEFAULT_APP_STATE', () => {
+    expect(DEFAULT_APP_STATE.controls.isDimensionGuidesVisible).toBe(false);
+  });
+
+  it('always loads dimension guides as false even if saved state was true', () => {
+    const customState: AppSavedState = {
+      version: 1,
+      camera: {
+        position: { x: 0, y: 0, z: 0 },
+        target: { x: 0, y: 0, z: 0 },
+        preset: 'board'
+      },
+      controls: {
+        isDaylight: true,
+        isRingLight: true,
+        ringLightIntensity: 1.0,
+        isIT2RigVisible: true,
+        is180DartsVisible: true,
+        isPlayerDummyVisible: true,
+        isDimensionGuidesVisible: true,
+        isSidebarCollapsed: false
+      }
+    };
+    saveState(customState);
+    const loaded = loadSavedState();
+    expect(loaded?.controls.isDimensionGuidesVisible).toBe(false);
   });
 
   it('recovers with fallback defaults for missing partial fields', () => {
