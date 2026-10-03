@@ -37,7 +37,7 @@ export const DEFAULT_APP_STATE: AppSavedState = {
     isIT2RigVisible: true,
     is180DartsVisible: true,
     isPlayerDummyVisible: true,
-    isDimensionGuidesVisible: true,
+    isDimensionGuidesVisible: false,
     isSidebarCollapsed: false
   }
 };
@@ -66,7 +66,8 @@ export function loadSavedState(): AppSavedState | null {
       },
       controls: {
         ...DEFAULT_APP_STATE.controls,
-        ...parsed.controls
+        ...parsed.controls,
+        isDimensionGuidesVisible: false
       }
     };
   } catch (err) {

@@ -66,7 +66,7 @@ export function setupViewControls(
           <button id="toggle-player" class="btn btn-toggle active" title="Toggle Player Mannequin">
             <span class="icon">🧍</span> Player
           </button>
-          <button id="toggle-dimensions" class="btn btn-toggle active" title="Toggle Regulation Dimension Lines">
+          <button id="toggle-dimensions" class="btn btn-toggle" title="Toggle Regulation Dimension Lines">
             <span class="icon">📏</span> Guides
           </button>
           <button id="toggle-pivot-orb" class="btn btn-toggle active" title="Toggle Floating Pivot Orb & Standing Position Marker">

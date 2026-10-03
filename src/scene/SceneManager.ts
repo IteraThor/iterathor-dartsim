@@ -158,6 +158,7 @@ export class SceneManager {
     this.scene.add(createOcheGroup());
 
     this.dimensionGuides = createDimensionGuidesGroup();
+    this.dimensionGuides.visible = false;
     this.scene.add(this.dimensionGuides);
 
     this.playerDummy = createPlayerDummyGroup();
