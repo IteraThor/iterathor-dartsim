@@ -79,6 +79,7 @@ export class SceneManager {
   private orbDragPointerId: number | null = null;
   private orbDragPlane = new THREE.Plane();
   private orbDragLastPoint = new THREE.Vector3();
+  private initialGazeTarget = new THREE.Vector3();
 
   // Smooth camera transition state
   private isTransitioning = false;
@@ -198,6 +199,7 @@ export class SceneManager {
             this.isDraggingOrb = true;
             this.orbDragPointerId = e.pointerId;
             this.controls.enabled = false; // Suspend OrbitControls while directly dragging orb
+            this.initialGazeTarget.copy(this.controls.target); // Remember original gaze orientation
 
             // Camera-facing drag plane through current orb target
             const normal = new THREE.Vector3();
@@ -221,7 +223,7 @@ export class SceneManager {
       this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       this.raycaster.setFromCamera(this.mouse, this.camera);
 
-      // Handle direct orb dragging across the room (view position stands still)
+      // Handle direct orb dragging across the room (view position & view angle stand completely still)
       if (this.isDraggingOrb && e.pointerId === this.orbDragPointerId) {
         const currentPoint = new THREE.Vector3();
         if (this.raycaster.ray.intersectPlane(this.orbDragPlane, currentPoint)) {
@@ -234,13 +236,7 @@ export class SceneManager {
           this.controls.target.z = THREE.MathUtils.clamp(this.controls.target.z, 0.05, 5.8);
 
           this.orbDragLastPoint.copy(currentPoint);
-          this.camera.lookAt(this.controls.target);
-          this.controls.update();
-
-          if (this.currentPreset !== null) {
-            this.currentPreset = null;
-            this.presetCallbacks.forEach(cb => cb(null));
-          }
+          // Camera position and view angle stand completely still during drag!
         }
         return;
       }
@@ -270,8 +266,28 @@ export class SceneManager {
       if (this.isDraggingOrb && e.pointerId === this.orbDragPointerId) {
         this.isDraggingOrb = false;
         this.orbDragPointerId = null;
-        this.controls.enabled = true;
         dom.style.cursor = 'default';
+
+        const movedDist = this.initialGazeTarget.distanceTo(this.controls.target);
+        if (movedDist > 0.005) {
+          // Only after release of the orb, smoothly focus/tilt the view angle towards it
+          this.cameraStartPos.copy(this.camera.position);
+          this.cameraTargetPos.copy(this.camera.position); // View position stands still
+          this.controlsStartTarget.copy(this.initialGazeTarget);
+          this.controlsTargetTarget.copy(this.controls.target);
+          this.transitionDuration = 320; // ms: fast, smooth tilt to center on orb
+          this.transitionStart = performance.now();
+          this.isTransitioning = true;
+          this.controls.enabled = true;
+
+          if (this.currentPreset !== null) {
+            this.currentPreset = null;
+            this.presetCallbacks.forEach(cb => cb(null));
+          }
+        } else {
+          this.controls.enabled = true;
+        }
+
         this.moveEndCallbacks.forEach(cb => cb());
         return;
       }
@@ -345,6 +361,7 @@ export class SceneManager {
     this.cameraTargetPos.copy(targetPos);
     this.controlsStartTarget.copy(this.controls.target);
     this.controlsTargetTarget.copy(targetLook);
+    this.transitionDuration = 700;
     this.transitionStart = performance.now();
     this.isTransitioning = true;
   }
@@ -710,7 +727,7 @@ export class SceneManager {
           this.isTransitioning = false;
           this.controls.update();
         }
-      } else if (!this.isMoving() && !this.isRotating() && !this.isZooming()) {
+      } else if (!this.isMoving() && !this.isRotating() && !this.isZooming() && !this.isDraggingOrb) {
         this.controls.update();
       }
 
