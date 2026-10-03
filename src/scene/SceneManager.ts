@@ -120,7 +120,7 @@ export class SceneManager {
 
     dom.addEventListener('pointerup', (e: PointerEvent) => {
       const dist = Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y);
-      if (dist < 6) { // Click, not orbit drag
+      if (dist < 15) { // Click/tap, not orbit drag (15px tolerates natural touch drift)
         const rect = dom.getBoundingClientRect();
         this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
         this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -139,7 +139,7 @@ export class SceneManager {
       this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       this.raycaster.setFromCamera(this.mouse, this.camera);
-      if (this.wallLightSwitch) {
+      if (this.wallLightSwitch && e.pointerType === 'mouse') {
         const intersects = this.raycaster.intersectObjects(this.wallLightSwitch.children, true);
         if (intersects.length > 0) {
           dom.style.cursor = 'pointer';
