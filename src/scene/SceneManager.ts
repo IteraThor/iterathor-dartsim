@@ -176,7 +176,7 @@ export class SceneManager {
     this.standingMarker.visible = false;
     this.scene.add(this.standingMarker);
 
-    this.customCameraRig = new CustomCameraRig({ x: 350, y: 150, z: 1200 });
+    this.customCameraRig = new CustomCameraRig({ x: 350, y: 150, z: 1200 }, this.controls.target);
     this.scene.add(this.customCameraRig.group);
 
     this.updateBoardLighting();
@@ -794,33 +794,41 @@ export class SceneManager {
         }
       }
 
-      // 1. Primary scene render
-      const canvasW = this.renderer.domElement.clientWidth;
-      const canvasH = this.renderer.domElement.clientHeight;
-      const dpr = this.renderer.getPixelRatio();
+      // Update custom camera aim to track the floating orb
+      if (this.customCameraRig && this.customCameraRig.isVisible()) {
+        this.customCameraRig.setAimTarget(this.controls.target);
+      }
 
-      this.renderer.setViewport(0, 0, Math.round(canvasW * dpr), Math.round(canvasH * dpr));
+      // 1. Primary scene render
+      const dpr = this.renderer.getPixelRatio();
+      const bufferSize = new THREE.Vector2();
+      this.renderer.getDrawingBufferSize(bufferSize);
+
+      this.renderer.setViewport(0, 0, bufferSize.x, bufferSize.y);
       this.renderer.setScissorTest(false);
       this.renderer.render(this.scene, this.camera);
 
       // 2. Secondary PiP Viewport live render
       if (this.customCameraRig.isVisible() && this.pipViewportFrame && this.pipViewportFrame.offsetParent !== null) {
         const rect = this.pipViewportFrame.getBoundingClientRect();
+        const canvasRect = this.renderer.domElement.getBoundingClientRect();
+
         if (rect.width > 10 && rect.height > 10) {
-          const pipX = Math.round(rect.left * dpr);
-          const pipY = Math.round((canvasH - rect.bottom) * dpr);
+          const pipX = Math.round((rect.left - canvasRect.left) * dpr);
+          const pipY = Math.round((canvasRect.bottom - rect.bottom) * dpr);
           const pipW = Math.round(rect.width * dpr);
           const pipH = Math.round(rect.height * dpr);
 
           this.customCameraRig.camera.aspect = rect.width / rect.height;
           this.customCameraRig.camera.updateProjectionMatrix();
 
-          this.renderer.clearDepth();
           this.renderer.setScissorTest(true);
           this.renderer.setScissor(pipX, pipY, pipW, pipH);
           this.renderer.setViewport(pipX, pipY, pipW, pipH);
+          this.renderer.clearDepth();
           this.renderer.render(this.scene, this.customCameraRig.camera);
           this.renderer.setScissorTest(false);
+          this.renderer.setViewport(0, 0, bufferSize.x, bufferSize.y);
         }
       }
     };
