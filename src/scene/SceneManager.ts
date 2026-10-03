@@ -538,8 +538,8 @@ export class SceneManager {
 
         if (this.rotateState.rotateLeft) deltaTheta -= rotAngle;
         if (this.rotateState.rotateRight) deltaTheta += rotAngle;
-        if (this.rotateState.tiltUp) deltaPhi += rotAngle;
-        if (this.rotateState.tiltDown) deltaPhi -= rotAngle;
+        if (this.rotateState.tiltUp) deltaPhi -= rotAngle;
+        if (this.rotateState.tiltDown) deltaPhi += rotAngle;
 
         this.rotateAroundOrb(deltaTheta, deltaPhi);
       }
