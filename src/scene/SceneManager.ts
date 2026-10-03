@@ -63,8 +63,16 @@ export class SceneManager {
   };
   public rotateSpeed = 1.6; // radians per second
 
+  // Camera Zoom state (closer/further from the stationary orb)
+  public zoomState = {
+    zoomIn: false,
+    zoomOut: false
+  };
+  public zoomSpeed = 2.2; // meters per second
+
   private lastFrameTime = performance.now();
   private moveEndCallbacks: (() => void)[] = [];
+  private pivotOrbCallbacks: ((visible: boolean) => void)[] = [];
 
   // Smooth camera transition state
   private isTransitioning = false;
@@ -436,6 +444,49 @@ export class SceneManager {
     }
   }
 
+  public setZoom(direction: keyof typeof this.zoomState, active: boolean): void {
+    const wasActive = this.zoomState[direction];
+    this.zoomState[direction] = active;
+    if (active) {
+      this.isTransitioning = false;
+      if (this.currentPreset !== null) {
+        this.currentPreset = null;
+        this.presetCallbacks.forEach(cb => cb(null));
+      }
+    } else if (wasActive && !this.isMoving() && !this.isRotating() && !this.isZooming()) {
+      this.moveEndCallbacks.forEach(cb => cb());
+    }
+  }
+
+  public isZooming(): boolean {
+    return this.zoomState.zoomIn || this.zoomState.zoomOut;
+  }
+
+  public zoomTowardsOrb(deltaDist: number): void {
+    this.isTransitioning = false;
+    const offset = new THREE.Vector3().subVectors(this.camera.position, this.controls.target);
+    const curDist = offset.length();
+    if (curDist < 0.0001) return;
+
+    // deltaDist < 0 moves closer to orb, deltaDist > 0 moves further
+    const newDist = THREE.MathUtils.clamp(curDist + deltaDist, this.controls.minDistance, this.controls.maxDistance);
+    offset.setLength(newDist);
+
+    this.camera.position.copy(this.controls.target).add(offset);
+
+    // Keep camera within room boundaries
+    this.camera.position.x = THREE.MathUtils.clamp(this.camera.position.x, -2.65, 2.65);
+    this.camera.position.y = THREE.MathUtils.clamp(this.camera.position.y, 0.05, 3.05);
+    this.camera.position.z = THREE.MathUtils.clamp(this.camera.position.z, -0.01, 6.2);
+
+    this.controls.update();
+
+    if (this.currentPreset !== null) {
+      this.currentPreset = null;
+      this.presetCallbacks.forEach(cb => cb(null));
+    }
+  }
+
   public onMoveEnd(callback: () => void): void {
     this.moveEndCallbacks.push(callback);
   }
@@ -544,6 +595,15 @@ export class SceneManager {
         this.rotateAroundOrb(deltaTheta, deltaPhi);
       }
 
+      // Handle camera zoom buttons (closer or further from the stationary orb)
+      if (this.isZooming()) {
+        const zoomDelta = this.zoomSpeed * deltaTime;
+        let deltaDist = 0;
+        if (this.zoomState.zoomIn) deltaDist -= zoomDelta;
+        if (this.zoomState.zoomOut) deltaDist += zoomDelta;
+        this.zoomTowardsOrb(deltaDist);
+      }
+
       if (this.isTransitioning) {
         const elapsed = time - this.transitionStart;
         const progress = Math.min(elapsed / this.transitionDuration, 1.0);
@@ -560,7 +620,7 @@ export class SceneManager {
           this.isTransitioning = false;
           this.controls.update();
         }
-      } else if (!this.isMoving() && !this.isRotating()) {
+      } else if (!this.isMoving() && !this.isRotating() && !this.isZooming()) {
         this.controls.update();
       }
 
@@ -608,7 +668,12 @@ export class SceneManager {
     const isVisible = visible !== undefined ? visible : !this.pivotOrb.visible;
     this.pivotOrb.visible = isVisible;
     this.standingMarker.visible = isVisible;
+    this.pivotOrbCallbacks.forEach(cb => cb(isVisible));
     return isVisible;
+  }
+
+  public onPivotOrbChange(callback: (visible: boolean) => void): void {
+    this.pivotOrbCallbacks.push(callback);
   }
 
   public stop(): void {

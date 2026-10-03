@@ -331,7 +331,8 @@ body, html {
   grid-row: 3;
 }
 
-.dpad-elevate-cluster {
+.dpad-elevate-cluster,
+.dpad-zoom-cluster {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -339,10 +340,29 @@ body, html {
   justify-content: space-between;
 }
 
-.dpad-elevate-cluster .dpad-btn {
+.dpad-elevate-cluster .dpad-btn,
+.dpad-zoom-cluster .dpad-btn {
   width: 38px;
   height: 62px;
   font-size: 1.1rem;
+}
+
+.dpad-orb-toggle {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 1.05rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  opacity: 0.45;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dpad-orb-toggle.active {
+  opacity: 1;
+  background: rgba(0, 229, 255, 0.22) !important;
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.45);
 }
 
 /* ==========================================================================
