@@ -96,14 +96,18 @@ export function setupViewControls(
         </div>
       </div>
 
-      <!-- Right Pad: Tilt & Turn View -->
-      <div class="hud-pad-box hud-pad-right glass-card" title="Touch & hold to tilt / rotate camera">
-        <div class="pad-title">TILT & TURN</div>
+      <!-- Right Pad: Tilt & Turn View + Zoom -->
+      <div class="hud-pad-box hud-pad-right glass-card" title="Touch & hold to tilt, rotate or zoom">
+        <div class="pad-title">LOOK & ZOOM</div>
         <div class="pad-body">
+          <div class="dpad-zoom-cluster">
+            <button class="dpad-btn dpad-zoom-in" data-zoom="zoomIn" aria-label="Zoom In" title="Zoom In (Closer to Orb)">➕</button>
+            <button class="dpad-btn dpad-zoom-out" data-zoom="zoomOut" aria-label="Zoom Out" title="Zoom Out (Further from Orb)">➖</button>
+          </div>
           <div class="dpad-cluster">
             <button class="dpad-btn dpad-up" data-rotate="tiltUp" aria-label="Tilt Up" title="Tilt View Up">▲</button>
             <button class="dpad-btn dpad-left" data-rotate="rotateLeft" aria-label="Turn Left" title="Rotate View Left">◀</button>
-            <div class="dpad-center" title="Tilt">🔄</div>
+            <button class="dpad-btn dpad-center dpad-orb-toggle active" id="hud-toggle-orb" aria-label="Toggle Orb Visibility" title="Toggle Floating Orb (ON / OFF)">🔮</button>
             <button class="dpad-btn dpad-right" data-rotate="rotateRight" aria-label="Turn Right" title="Rotate View Right">▶</button>
             <button class="dpad-btn dpad-down" data-rotate="tiltDown" aria-label="Tilt Down" title="Tilt View Down">▼</button>
           </div>
@@ -159,6 +163,48 @@ export function setupViewControls(
     btn.addEventListener('pointerleave', stop);
     btn.addEventListener('contextmenu', (e) => e.preventDefault());
   });
+
+  // Attach continuous zoom in/out events for all [data-zoom] buttons
+  const zoomButtons = container.querySelectorAll<HTMLButtonElement>('[data-zoom]');
+  zoomButtons.forEach(btn => {
+    const zoom = btn.dataset.zoom as 'zoomIn' | 'zoomOut';
+    if (!zoom) return;
+
+    const start = (e: Event) => {
+      e.preventDefault();
+      btn.classList.add('active');
+      sceneManager.setZoom(zoom, true);
+    };
+
+    const stop = () => {
+      btn.classList.remove('active');
+      sceneManager.setZoom(zoom, false);
+    };
+
+    btn.addEventListener('pointerdown', start);
+    btn.addEventListener('pointerup', stop);
+    btn.addEventListener('pointercancel', stop);
+    btn.addEventListener('pointerleave', stop);
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
+  });
+
+  // Sync Orb visibility between HUD pad button and top-bar button
+  const hudToggleOrb = container.querySelector<HTMLButtonElement>('#hud-toggle-orb');
+  const topToggleOrb = container.querySelector<HTMLButtonElement>('#toggle-pivot-orb');
+
+  const updateOrbUI = (visible: boolean) => {
+    hudToggleOrb?.classList.toggle('active', visible);
+    topToggleOrb?.classList.toggle('active', visible);
+  };
+
+  hudToggleOrb?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const isVisible = sceneManager.togglePivotOrb();
+    updateOrbUI(isVisible);
+    onStateChange?.();
+  });
+
+  sceneManager.onPivotOrbChange(updateOrbUI);
 
   // Attach view preset events
   const presetButtons = container.querySelectorAll<HTMLButtonElement>('.btn-preset');
@@ -275,6 +321,7 @@ export function setupViewControls(
     toggleBtns.get('toggle-player')?.classList.toggle('active', state.controls.isPlayerDummyVisible);
     toggleBtns.get('toggle-it2-rig')?.classList.toggle('active', state.controls.isIT2RigVisible);
     toggleBtns.get('toggle-pivot-orb')?.classList.toggle('active', sceneManager.pivotOrb.visible);
+    hudToggleOrb?.classList.toggle('active', sceneManager.pivotOrb.visible);
     toggleDartsBtn.classList.toggle('active', state.controls.is180DartsVisible);
     updateRingLightUI(state.controls.isRingLight);
     updateLightUI(state.controls.isDaylight);
