@@ -9,6 +9,7 @@ import { createIT2RingRigGroup, IT2RingRigGroup } from './IT2RingRig';
 import { createDartsGroup } from './Darts';
 import { createPivotOrbGroup, createStandingMarkerGroup } from './PivotMarker';
 import { DARTS_DIMENSIONS } from '../constants/dartsDimensions';
+import { CustomCameraRig, BullseyeCoordsMm } from './CustomCameraRig';
 
 export class SceneManager {
   public renderer: THREE.WebGLRenderer;
@@ -21,6 +22,9 @@ export class SceneManager {
   public darts: THREE.Group;
   public pivotOrb: THREE.Group;
   public standingMarker: THREE.Group;
+  public customCameraRig: CustomCameraRig;
+  private pipViewportFrame: HTMLElement | null = null;
+  private customCameraCallbacks: ((visible: boolean) => void)[] = [];
 
   public isDaylight = true;
   private daylightGroup: THREE.Group | null = null;
@@ -99,6 +103,7 @@ export class SceneManager {
     const aspect = container.clientWidth / container.clientHeight;
     this.camera = new THREE.PerspectiveCamera(45, aspect, 0.05, 50);
     this.camera.position.set(-2.4, 2.2, 3.6);
+    this.camera.layers.enable(1); // Enable layer 1 so main camera sees 3D camera model in the room
 
     // 3. Renderer with antialiasing and soft shadows
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
@@ -170,6 +175,9 @@ export class SceneManager {
     this.standingMarker = createStandingMarkerGroup();
     this.standingMarker.visible = false;
     this.scene.add(this.standingMarker);
+
+    this.customCameraRig = new CustomCameraRig({ x: 350, y: 150, z: 1200 });
+    this.scene.add(this.customCameraRig.group);
 
     this.updateBoardLighting();
     this.toggleDaylight(true);
@@ -786,9 +794,61 @@ export class SceneManager {
         }
       }
 
+      // 1. Primary scene render
+      const canvasW = this.renderer.domElement.clientWidth;
+      const canvasH = this.renderer.domElement.clientHeight;
+      const dpr = this.renderer.getPixelRatio();
+
+      this.renderer.setViewport(0, 0, Math.round(canvasW * dpr), Math.round(canvasH * dpr));
+      this.renderer.setScissorTest(false);
       this.renderer.render(this.scene, this.camera);
+
+      // 2. Secondary PiP Viewport live render
+      if (this.customCameraRig.isVisible() && this.pipViewportFrame && this.pipViewportFrame.offsetParent !== null) {
+        const rect = this.pipViewportFrame.getBoundingClientRect();
+        if (rect.width > 10 && rect.height > 10) {
+          const pipX = Math.round(rect.left * dpr);
+          const pipY = Math.round((canvasH - rect.bottom) * dpr);
+          const pipW = Math.round(rect.width * dpr);
+          const pipH = Math.round(rect.height * dpr);
+
+          this.customCameraRig.camera.aspect = rect.width / rect.height;
+          this.customCameraRig.camera.updateProjectionMatrix();
+
+          this.renderer.clearDepth();
+          this.renderer.setScissorTest(true);
+          this.renderer.setScissor(pipX, pipY, pipW, pipH);
+          this.renderer.setViewport(pipX, pipY, pipW, pipH);
+          this.renderer.render(this.scene, this.customCameraRig.camera);
+          this.renderer.setScissorTest(false);
+        }
+      }
     };
     requestAnimationFrame(animate);
+  }
+
+  public setPipViewportElement(el: HTMLElement | null): void {
+    this.pipViewportFrame = el;
+  }
+
+  public getCustomCameraRig(): CustomCameraRig {
+    return this.customCameraRig;
+  }
+
+  public placeCustomCameraAtOrb(): BullseyeCoordsMm {
+    this.customCameraRig.setWorldPosition(this.controls.target);
+    return this.customCameraRig.getCoordsMm();
+  }
+
+  public toggleCustomCamera(visible?: boolean): boolean {
+    const isVisible = visible !== undefined ? visible : !this.customCameraRig.isVisible();
+    this.customCameraRig.setVisible(isVisible);
+    this.customCameraCallbacks.forEach(cb => cb(isVisible));
+    return isVisible;
+  }
+
+  public onCustomCameraChange(callback: (visible: boolean) => void): void {
+    this.customCameraCallbacks.push(callback);
   }
 
   public togglePivotOrb(visible?: boolean): boolean {

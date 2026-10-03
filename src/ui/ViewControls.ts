@@ -57,6 +57,9 @@ export function setupViewControls(
           <button id="toggle-it2-rig" class="btn btn-toggle active" title="Toggle IT2 3-Camera Rig">
             <span class="icon">📷</span> IT2 Rig
           </button>
+          <button id="toggle-custom-cam" class="btn btn-toggle active" title="Toggle Custom Camera & Live PiP Feed">
+            <span class="icon">📹</span> Custom Cam
+          </button>
           <button id="toggle-darts" class="btn btn-toggle active" title="Toggle 180 Darts">
             <span class="icon">🎯</span> 180s
           </button>
@@ -165,6 +168,7 @@ export function setupViewControls(
     ['toggle-dimensions', () => sceneManager.toggleDimensions()],
     ['toggle-player', () => sceneManager.togglePlayerDummy()],
     ['toggle-it2-rig', () => sceneManager.toggleIT2Rig()],
+    ['toggle-custom-cam', () => sceneManager.toggleCustomCamera()],
     ['toggle-pivot-orb', () => sceneManager.togglePivotOrb()],
   ];
   const toggleBtns = new Map<string, HTMLButtonElement>();
@@ -175,6 +179,10 @@ export function setupViewControls(
       btn.classList.toggle('active', toggleFn());
       onStateChange?.();
     });
+  });
+
+  sceneManager.onCustomCameraChange((visible) => {
+    toggleBtns.get('toggle-custom-cam')?.classList.toggle('active', visible);
   });
 
   // Attach 360° Ring Light toggle event & dimmer
