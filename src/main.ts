@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Hook OrbitControls interaction end to auto-save camera angle/distance
   sceneManager.controls.addEventListener('end', triggerAutoSave);
+  sceneManager.onMoveEnd(triggerAutoSave);
 
   // Guarantee state is saved when leaving or closing page
   window.addEventListener('beforeunload', saveCurrentState);

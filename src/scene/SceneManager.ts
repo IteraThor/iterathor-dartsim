@@ -40,6 +40,19 @@ export class SceneManager {
   private isRunning = false;
   private animationFrameId = 0;
 
+  // Continuous Camera Walk/Fly movement state
+  public moveState = {
+    forward: false,
+    backward: false,
+    left: false,
+    right: false,
+    up: false,
+    down: false
+  };
+  public moveSpeed = 2.4; // meters per second
+  private lastFrameTime = performance.now();
+  private moveEndCallbacks: (() => void)[] = [];
+
   // Smooth camera transition state
   private isTransitioning = false;
   private transitionStart = 0;
@@ -73,6 +86,13 @@ export class SceneManager {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
+    this.controls.enablePan = true;
+    this.controls.screenSpacePanning = true;
+    this.controls.panSpeed = 1.0;
+    this.controls.touches = {
+      ONE: THREE.TOUCH.ROTATE,
+      TWO: THREE.TOUCH.DOLLY_PAN
+    };
     this.controls.target.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS * 0.6, 1.1);
     this.controls.maxPolarAngle = Math.PI / 2 - 0.02; // prevent camera going below floor
     this.controls.minDistance = 0.2;
@@ -85,6 +105,8 @@ export class SceneManager {
         this.presetCallbacks.forEach(cb => cb(null));
       }
     });
+
+    this.setupKeyboardControls();
 
     // 5. Add Scene Components
     const room = createDartRoomGroup();
@@ -308,13 +330,124 @@ export class SceneManager {
     this.daylightCallbacks.push(callback);
   }
 
+  public setMove(direction: keyof typeof this.moveState, active: boolean): void {
+    const wasActive = this.moveState[direction];
+    this.moveState[direction] = active;
+    if (active) {
+      this.isTransitioning = false;
+      if (this.currentPreset !== null) {
+        this.currentPreset = null;
+        this.presetCallbacks.forEach(cb => cb(null));
+      }
+    } else if (wasActive && !this.isMoving()) {
+      this.moveEndCallbacks.forEach(cb => cb());
+    }
+  }
+
+  public isMoving(): boolean {
+    return (
+      this.moveState.forward ||
+      this.moveState.backward ||
+      this.moveState.left ||
+      this.moveState.right ||
+      this.moveState.up ||
+      this.moveState.down
+    );
+  }
+
+  public onMoveEnd(callback: () => void): void {
+    this.moveEndCallbacks.push(callback);
+  }
+
+  private setupKeyboardControls(): void {
+    const keyMap: Record<string, keyof typeof this.moveState> = {
+      KeyW: 'forward',
+      ArrowUp: 'forward',
+      KeyS: 'backward',
+      ArrowDown: 'backward',
+      KeyA: 'left',
+      ArrowLeft: 'left',
+      KeyD: 'right',
+      ArrowRight: 'right',
+      KeyE: 'up',
+      Space: 'up',
+      KeyQ: 'down',
+      KeyC: 'down'
+    };
+
+    window.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const action = keyMap[e.code];
+      if (action) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+          e.preventDefault();
+        }
+        this.setMove(action, true);
+      }
+    });
+
+    window.addEventListener('keyup', (e: KeyboardEvent) => {
+      const action = keyMap[e.code];
+      if (action) {
+        this.setMove(action, false);
+      }
+    });
+
+    window.addEventListener('blur', () => {
+      for (const k of Object.keys(this.moveState) as (keyof typeof this.moveState)[]) {
+        this.moveState[k] = false;
+      }
+    });
+  }
+
   public start(): void {
     if (this.isRunning) return;
     this.isRunning = true;
+    this.lastFrameTime = performance.now();
 
     const animate = (time: number) => {
       if (!this.isRunning) return;
       this.animationFrameId = requestAnimationFrame(animate);
+
+      const now = performance.now();
+      const deltaTime = Math.min((now - this.lastFrameTime) / 1000, 0.1);
+      this.lastFrameTime = now;
+
+      // Handle continuous walking/flying movement through the room
+      if (this.isMoving()) {
+        const distance = this.moveSpeed * deltaTime;
+        const forward = new THREE.Vector3();
+        this.camera.getWorldDirection(forward);
+        forward.y = 0;
+        if (forward.lengthSq() < 0.0001) {
+          forward.set(0, 0, -1);
+        } else {
+          forward.normalize();
+        }
+
+        const right = new THREE.Vector3();
+        right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+
+        const delta = new THREE.Vector3();
+        if (this.moveState.forward) delta.addScaledVector(forward, distance);
+        if (this.moveState.backward) delta.addScaledVector(forward, -distance);
+        if (this.moveState.right) delta.addScaledVector(right, distance);
+        if (this.moveState.left) delta.addScaledVector(right, -distance);
+        if (this.moveState.up) delta.y += distance;
+        if (this.moveState.down) delta.y -= distance;
+
+        if (delta.lengthSq() > 0) {
+          this.camera.position.add(delta);
+          this.controls.target.add(delta);
+
+          // Boundaries to keep the camera within the darts room
+          this.camera.position.x = THREE.MathUtils.clamp(this.camera.position.x, -2.65, 2.65);
+          this.camera.position.y = THREE.MathUtils.clamp(this.camera.position.y, 0.15, 3.05);
+          this.camera.position.z = THREE.MathUtils.clamp(this.camera.position.z, -0.01, 6.2);
+
+          this.controls.update();
+        }
+      }
 
       if (this.isTransitioning) {
         const elapsed = time - this.transitionStart;
@@ -332,7 +465,7 @@ export class SceneManager {
           this.isTransitioning = false;
           this.controls.update();
         }
-      } else {
+      } else if (!this.isMoving()) {
         this.controls.update();
       }
 

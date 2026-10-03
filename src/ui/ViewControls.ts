@@ -49,7 +49,39 @@ export function setupViewControls(
           </div>
         </div>
 
-        <!-- Section 2: Lighting & Environment -->
+        <!-- Section 2: Room Navigation (Walk / Move) -->
+        <div class="control-section">
+          <div class="section-label">Room Navigation</div>
+          <div class="nav-control-box">
+            <div class="nav-dpad-grid">
+              <button class="btn btn-walk nav-btn-up" data-dir="forward" title="Move Forward (W / Up Arrow)">
+                <span>▲</span> Forward
+              </button>
+              <div class="nav-dpad-row">
+                <button class="btn btn-walk" data-dir="left" title="Strafe Left (A / Left Arrow)">
+                  <span>◀</span> Left
+                </button>
+                <button class="btn btn-walk" data-dir="backward" title="Move Backward (S / Down Arrow)">
+                  <span>▼</span> Back
+                </button>
+                <button class="btn btn-walk" data-dir="right" title="Strafe Right (D / Right Arrow)">
+                  <span>▶</span> Right
+                </button>
+              </div>
+              <div class="nav-dpad-elevate">
+                <button class="btn btn-walk" data-dir="up" title="Elevate Up (E / Space)">
+                  <span>⮝</span> Up
+                </button>
+                <button class="btn btn-walk" data-dir="down" title="Elevate Down (Q / C)">
+                  <span>⮟</span> Down
+                </button>
+              </div>
+            </div>
+            <div class="nav-helper-text">Desktop: Hold WASD / Arrows to walk • Q/E elevate</div>
+          </div>
+        </div>
+
+        <!-- Section 3: Lighting & Environment -->
         <div class="control-section">
           <div class="section-label">Lighting & Environment</div>
           <div class="sidebar-toggle-list">
@@ -107,7 +139,46 @@ export function setupViewControls(
     <button id="sidebar-expand-btn" class="sidebar-floating-toggle glass-card" title="Open Controls Menu" style="display: none;">
       <span class="icon">🎮</span> Controls
     </button>
+
+    <!-- Floating On-Screen Navigation Pad (Ideal for Mobile Thumb Movement) -->
+    <div id="floating-nav-pad" class="floating-nav-pad glass-card" title="Hold to move through room">
+      <div class="dpad-cluster">
+        <button class="dpad-btn dpad-up" data-dir="forward" aria-label="Forward">▲</button>
+        <button class="dpad-btn dpad-left" data-dir="left" aria-label="Left">◀</button>
+        <div class="dpad-center" title="Walk Pad">🚶</div>
+        <button class="dpad-btn dpad-right" data-dir="right" aria-label="Right">▶</button>
+        <button class="dpad-btn dpad-down" data-dir="backward" aria-label="Backward">▼</button>
+      </div>
+      <div class="dpad-elevate-cluster">
+        <button class="dpad-btn dpad-elev-up" data-dir="up" aria-label="Elevate Up" title="Move Up (E / Space)">⮝</button>
+        <button class="dpad-btn dpad-elev-down" data-dir="down" aria-label="Elevate Down" title="Move Down (Q / C)">⮟</button>
+      </div>
+    </div>
   `;
+
+  // Attach continuous walk/move events for all [data-dir] buttons
+  const navButtons = container.querySelectorAll<HTMLButtonElement>('[data-dir]');
+  navButtons.forEach(btn => {
+    const dir = btn.dataset.dir as any;
+    if (!dir) return;
+
+    const start = (e: Event) => {
+      e.preventDefault();
+      btn.classList.add('active');
+      sceneManager.setMove(dir, true);
+    };
+
+    const stop = () => {
+      btn.classList.remove('active');
+      sceneManager.setMove(dir, false);
+    };
+
+    btn.addEventListener('pointerdown', start);
+    btn.addEventListener('pointerup', stop);
+    btn.addEventListener('pointercancel', stop);
+    btn.addEventListener('pointerleave', stop);
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
+  });
 
   // Attach view preset events
   const presetButtons = container.querySelectorAll<HTMLButtonElement>('.btn-preset');
