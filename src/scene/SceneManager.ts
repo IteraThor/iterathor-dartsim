@@ -52,7 +52,7 @@ export class SceneManager {
     up: false,
     down: false
   };
-  public moveSpeed = 2.4; // meters per second
+  public moveSpeed = 1.1; // meters per second (gentle, controlled movement)
 
   // Camera Tilt/Rotate state
   public rotateState = {
