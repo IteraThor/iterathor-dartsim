@@ -221,24 +221,20 @@ export class SceneManager {
       this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       this.raycaster.setFromCamera(this.mouse, this.camera);
 
-      // Handle direct orb dragging across the room
+      // Handle direct orb dragging across the room (view position stands still)
       if (this.isDraggingOrb && e.pointerId === this.orbDragPointerId) {
         const currentPoint = new THREE.Vector3();
         if (this.raycaster.ray.intersectPlane(this.orbDragPlane, currentPoint)) {
           const delta = new THREE.Vector3().subVectors(currentPoint, this.orbDragLastPoint);
           this.controls.target.add(delta);
-          this.camera.position.add(delta);
 
-          // Boundaries to keep orb and camera inside the darts room
+          // Boundaries to keep orb inside the darts room
           this.controls.target.x = THREE.MathUtils.clamp(this.controls.target.x, -2.4, 2.4);
           this.controls.target.y = THREE.MathUtils.clamp(this.controls.target.y, 0.1, 2.85);
           this.controls.target.z = THREE.MathUtils.clamp(this.controls.target.z, 0.05, 5.8);
 
-          this.camera.position.x = THREE.MathUtils.clamp(this.camera.position.x, -2.65, 2.65);
-          this.camera.position.y = THREE.MathUtils.clamp(this.camera.position.y, 0.05, 3.05);
-          this.camera.position.z = THREE.MathUtils.clamp(this.camera.position.z, -0.01, 6.2);
-
           this.orbDragLastPoint.copy(currentPoint);
+          this.camera.lookAt(this.controls.target);
           this.controls.update();
 
           if (this.currentPreset !== null) {
