@@ -95,27 +95,28 @@ export class SceneManager {
     this.renderer.toneMappingExposure = 1.05;
     container.appendChild(this.renderer.domElement);
 
-    // 4. OrbitControls
+    // 4. OrbitControls centered strictly around the Orb (controls.target)
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
-    this.controls.enablePan = false;
+    this.controls.enablePan = false; // Panning disabled so controls stay centered on the orb
+    this.controls.enableRotate = true;
     this.controls.mouseButtons = {
-      LEFT: null as any,
+      LEFT: THREE.MOUSE.ROTATE,
       MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: null as any
+      RIGHT: THREE.MOUSE.ROTATE
     };
     this.controls.touches = {
-      ONE: null as any,
+      ONE: THREE.TOUCH.ROTATE,
       TWO: THREE.TOUCH.DOLLY_PAN
     };
     this.controls.target.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS * 0.6, 1.1);
     this.controls.minPolarAngle = 0.02;
-    this.controls.maxPolarAngle = Math.PI - 0.02; // Full vertical range: look up from low level to ceiling
+    this.controls.maxPolarAngle = Math.PI - 0.02; // Full vertical range: from bottom floor to top
     this.controls.minDistance = 0.2;
     this.controls.maxDistance = 10.0;
 
-    // Reset preset indicator when user manually orbits, pans, or zooms
+    // Reset preset indicator when user manually orbits or zooms around the orb
     this.controls.addEventListener('start', () => {
       if (this.currentPreset !== null) {
         this.currentPreset = null;
@@ -157,32 +158,30 @@ export class SceneManager {
     this.updateBoardLighting();
     this.toggleDaylight(true);
 
-    // 6. Interactive Drag-to-Rotate View & Physical Light Switch raycasting
+    // 6. Interactive Light Switch raycasting
     const dom = this.renderer.domElement;
-    let isPointerDragging = false;
-    let lastPointerX = 0;
-    let lastPointerY = 0;
 
     dom.addEventListener('pointerdown', (e: PointerEvent) => {
       this.pointerDownPos.set(e.clientX, e.clientY);
-      lastPointerX = e.clientX;
-      lastPointerY = e.clientY;
-      isPointerDragging = true;
+    });
+
+    dom.addEventListener('pointerup', (e: PointerEvent) => {
+      const dist = Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y);
+      if (dist < 15) { // Click/tap on switch
+        const rect = dom.getBoundingClientRect();
+        this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        if (this.wallLightSwitch) {
+          const intersects = this.raycaster.intersectObjects(this.wallLightSwitch.children, true);
+          if (intersects.length > 0) {
+            this.toggleDaylight();
+          }
+        }
+      }
     });
 
     dom.addEventListener('pointermove', (e: PointerEvent) => {
-      if (isPointerDragging) {
-        const deltaX = e.clientX - lastPointerX;
-        const deltaY = e.clientY - lastPointerY;
-        lastPointerX = e.clientX;
-        lastPointerY = e.clientY;
-
-        // In-place gaze rotation: Camera position stays completely fixed,
-        // dragging only rotates the view around without moving through the room!
-        const sensitivity = 0.0035;
-        this.rotateViewInPlace(deltaX * sensitivity, deltaY * sensitivity);
-      }
-
       const rect = dom.getBoundingClientRect();
       this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -196,30 +195,6 @@ export class SceneManager {
         }
       }
     });
-
-    const stopDrag = (e: PointerEvent) => {
-      if (!isPointerDragging) return;
-      isPointerDragging = false;
-
-      const dist = Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y);
-      if (dist < 15) { // Click/tap on switch
-        const rect = dom.getBoundingClientRect();
-        this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-        this.raycaster.setFromCamera(this.mouse, this.camera);
-        if (this.wallLightSwitch) {
-          const intersects = this.raycaster.intersectObjects(this.wallLightSwitch.children, true);
-          if (intersects.length > 0) {
-            this.toggleDaylight();
-          }
-        }
-      } else {
-        this.moveEndCallbacks.forEach(cb => cb());
-      }
-    };
-
-    dom.addEventListener('pointerup', stopDrag);
-    dom.addEventListener('pointercancel', stopDrag);
 
     // 7. Resize listener
     window.addEventListener('resize', this.onWindowResize);
@@ -428,23 +403,30 @@ export class SceneManager {
     );
   }
 
-  public rotateViewInPlace(deltaTheta: number, deltaPhi: number): void {
+  public rotateAroundOrb(deltaTheta: number, deltaPhi: number): void {
     this.isTransitioning = false;
-    const lookDir = new THREE.Vector3().subVectors(this.controls.target, this.camera.position);
-    if (lookDir.lengthSq() < 0.0001) {
-      lookDir.set(0, 0, -1);
+    // Vector from target (orb) to camera
+    const offset = new THREE.Vector3().subVectors(this.camera.position, this.controls.target);
+    if (offset.lengthSq() < 0.0001) {
+      offset.set(0, 0, 1);
     }
-    const spherical = new THREE.Spherical().setFromVector3(lookDir);
+    const spherical = new THREE.Spherical().setFromVector3(offset);
 
-    spherical.theta -= deltaTheta;
-    spherical.phi -= deltaPhi;
+    spherical.theta += deltaTheta;
+    spherical.phi += deltaPhi;
 
-    // Clamp polar angle so you can look fully up to ceiling or down to floor
+    // Allow full vertical rotation (from low floor level looking up to ceiling looking down)
     spherical.phi = THREE.MathUtils.clamp(spherical.phi, 0.02, Math.PI - 0.02);
     spherical.makeSafe();
 
-    lookDir.setFromSpherical(spherical);
-    this.controls.target.copy(this.camera.position).add(lookDir);
+    offset.setFromSpherical(spherical);
+    this.camera.position.copy(this.controls.target).add(offset);
+
+    // Keep camera within room boundaries
+    this.camera.position.x = THREE.MathUtils.clamp(this.camera.position.x, -2.65, 2.65);
+    this.camera.position.y = THREE.MathUtils.clamp(this.camera.position.y, 0.05, 3.05);
+    this.camera.position.z = THREE.MathUtils.clamp(this.camera.position.z, -0.01, 6.2);
+
     this.camera.lookAt(this.controls.target);
     this.controls.update();
 
@@ -548,18 +530,18 @@ export class SceneManager {
         }
       }
 
-      // Handle camera tilt and rotation buttons (rotates view in place without moving through room)
+      // Handle camera tilt and rotation buttons (orbits camera around the stationary orb)
       if (this.isRotating()) {
         const rotAngle = this.rotateSpeed * deltaTime;
         let deltaTheta = 0;
         let deltaPhi = 0;
 
-        if (this.rotateState.rotateLeft) deltaTheta += rotAngle;
-        if (this.rotateState.rotateRight) deltaTheta -= rotAngle;
+        if (this.rotateState.rotateLeft) deltaTheta -= rotAngle;
+        if (this.rotateState.rotateRight) deltaTheta += rotAngle;
         if (this.rotateState.tiltUp) deltaPhi += rotAngle;
         if (this.rotateState.tiltDown) deltaPhi -= rotAngle;
 
-        this.rotateViewInPlace(deltaTheta, deltaPhi);
+        this.rotateAroundOrb(deltaTheta, deltaPhi);
       }
 
       if (this.isTransitioning) {
