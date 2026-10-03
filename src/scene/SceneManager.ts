@@ -50,6 +50,16 @@ export class SceneManager {
     down: false
   };
   public moveSpeed = 2.4; // meters per second
+
+  // Camera Tilt/Rotate state
+  public rotateState = {
+    tiltUp: false,
+    tiltDown: false,
+    rotateLeft: false,
+    rotateRight: false
+  };
+  public rotateSpeed = 1.6; // radians per second
+
   private lastFrameTime = performance.now();
   private moveEndCallbacks: (() => void)[] = [];
 
@@ -355,6 +365,29 @@ export class SceneManager {
     );
   }
 
+  public setRotate(direction: keyof typeof this.rotateState, active: boolean): void {
+    const wasActive = this.rotateState[direction];
+    this.rotateState[direction] = active;
+    if (active) {
+      this.isTransitioning = false;
+      if (this.currentPreset !== null) {
+        this.currentPreset = null;
+        this.presetCallbacks.forEach(cb => cb(null));
+      }
+    } else if (wasActive && !this.isRotating()) {
+      this.moveEndCallbacks.forEach(cb => cb());
+    }
+  }
+
+  public isRotating(): boolean {
+    return (
+      this.rotateState.tiltUp ||
+      this.rotateState.tiltDown ||
+      this.rotateState.rotateLeft ||
+      this.rotateState.rotateRight
+    );
+  }
+
   public onMoveEnd(callback: () => void): void {
     this.moveEndCallbacks.push(callback);
   }
@@ -449,6 +482,27 @@ export class SceneManager {
         }
       }
 
+      // Handle camera tilt and rotation
+      if (this.isRotating()) {
+        const rotAngle = this.rotateSpeed * deltaTime;
+        const offset = new THREE.Vector3().subVectors(this.camera.position, this.controls.target);
+        const spherical = new THREE.Spherical().setFromVector3(offset);
+
+        if (this.rotateState.rotateLeft) spherical.theta += rotAngle;
+        if (this.rotateState.rotateRight) spherical.theta -= rotAngle;
+        if (this.rotateState.tiltUp) spherical.phi += rotAngle;
+        if (this.rotateState.tiltDown) spherical.phi -= rotAngle;
+
+        // Clamp polar angle so camera never goes below floor or inverts over north pole
+        spherical.phi = THREE.MathUtils.clamp(spherical.phi, 0.02, Math.PI / 2 - 0.02);
+        spherical.makeSafe();
+
+        offset.setFromSpherical(spherical);
+        this.camera.position.copy(this.controls.target).add(offset);
+        this.camera.lookAt(this.controls.target);
+        this.controls.update();
+      }
+
       if (this.isTransitioning) {
         const elapsed = time - this.transitionStart;
         const progress = Math.min(elapsed / this.transitionDuration, 1.0);
@@ -465,7 +519,7 @@ export class SceneManager {
           this.isTransitioning = false;
           this.controls.update();
         }
-      } else if (!this.isMoving()) {
+      } else if (!this.isMoving() && !this.isRotating()) {
         this.controls.update();
       }
 

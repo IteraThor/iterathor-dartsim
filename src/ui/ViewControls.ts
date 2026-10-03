@@ -81,7 +81,30 @@ export function setupViewControls(
           </div>
         </div>
 
-        <!-- Section 3: Lighting & Environment -->
+        <!-- Section 3: Camera Tilt & Rotation -->
+        <div class="control-section">
+          <div class="section-label">Camera Tilt & Rotation</div>
+          <div class="nav-control-box">
+            <div class="nav-dpad-grid">
+              <button class="btn btn-walk nav-btn-up" data-rotate="tiltUp" title="Tilt View Up">
+                <span>▲</span> Tilt Up
+              </button>
+              <div class="nav-dpad-row">
+                <button class="btn btn-walk" data-rotate="rotateLeft" title="Rotate View Left">
+                  <span>◀</span> Turn Left
+                </button>
+                <button class="btn btn-walk" data-rotate="tiltDown" title="Tilt View Down">
+                  <span>▼</span> Tilt Down
+                </button>
+                <button class="btn btn-walk" data-rotate="rotateRight" title="Rotate View Right">
+                  <span>▶</span> Turn Right
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Lighting & Environment -->
         <div class="control-section">
           <div class="section-label">Lighting & Environment</div>
           <div class="sidebar-toggle-list">
@@ -140,21 +163,64 @@ export function setupViewControls(
       <span class="icon">🎮</span> Controls
     </button>
 
-    <!-- Floating On-Screen Navigation Pad (Ideal for Mobile Thumb Movement) -->
-    <div id="floating-nav-pad" class="floating-nav-pad glass-card" title="Hold to move through room">
-      <div class="dpad-cluster">
-        <button class="dpad-btn dpad-up" data-dir="forward" aria-label="Forward">▲</button>
-        <button class="dpad-btn dpad-left" data-dir="left" aria-label="Left">◀</button>
-        <div class="dpad-center" title="Walk Pad">🚶</div>
-        <button class="dpad-btn dpad-right" data-dir="right" aria-label="Right">▶</button>
-        <button class="dpad-btn dpad-down" data-dir="backward" aria-label="Backward">▼</button>
+    <!-- Floating On-Screen Navigation Pad (Walk & Tilt View) -->
+    <div id="floating-nav-pad" class="floating-nav-pad glass-card" title="Hold to move or tilt view">
+      <div class="nav-pad-header">
+        <button id="nav-mode-walk" class="nav-tab active" title="Walk & Elevate">🚶 Walk</button>
+        <button id="nav-mode-look" class="nav-tab" title="Tilt & Rotate View">🔄 Tilt</button>
       </div>
-      <div class="dpad-elevate-cluster">
-        <button class="dpad-btn dpad-elev-up" data-dir="up" aria-label="Elevate Up" title="Move Up (E / Space)">⮝</button>
-        <button class="dpad-btn dpad-elev-down" data-dir="down" aria-label="Elevate Down" title="Move Down (Q / C)">⮟</button>
+
+      <!-- Walk Pad -->
+      <div id="dpad-walk-view" class="dpad-view">
+        <div class="dpad-cluster">
+          <button class="dpad-btn dpad-up" data-dir="forward" aria-label="Forward" title="Walk Forward">▲</button>
+          <button class="dpad-btn dpad-left" data-dir="left" aria-label="Left" title="Strafe Left">◀</button>
+          <div class="dpad-center" title="Walk">🚶</div>
+          <button class="dpad-btn dpad-right" data-dir="right" aria-label="Right" title="Strafe Right">▶</button>
+          <button class="dpad-btn dpad-down" data-dir="backward" aria-label="Backward" title="Walk Backward">▼</button>
+        </div>
+        <div class="dpad-elevate-cluster">
+          <button class="dpad-btn dpad-elev-up" data-dir="up" aria-label="Elevate Up" title="Move Up">⮝</button>
+          <button class="dpad-btn dpad-elev-down" data-dir="down" aria-label="Elevate Down" title="Move Down">⮟</button>
+        </div>
+      </div>
+
+      <!-- Tilt / Rotate Pad -->
+      <div id="dpad-look-view" class="dpad-view" style="display: none;">
+        <div class="dpad-cluster">
+          <button class="dpad-btn dpad-up" data-rotate="tiltUp" aria-label="Tilt Up" title="Tilt View Up">▲</button>
+          <button class="dpad-btn dpad-left" data-rotate="rotateLeft" aria-label="Turn Left" title="Rotate View Left">◀</button>
+          <div class="dpad-center" title="Tilt View">🔄</div>
+          <button class="dpad-btn dpad-right" data-rotate="rotateRight" aria-label="Turn Right" title="Rotate View Right">▶</button>
+          <button class="dpad-btn dpad-down" data-rotate="tiltDown" aria-label="Tilt Down" title="Tilt View Down">▼</button>
+        </div>
+        <div class="dpad-elevate-cluster">
+          <button class="dpad-btn dpad-elev-up" data-dir="up" aria-label="Elevate Up" title="Move Up">⮝</button>
+          <button class="dpad-btn dpad-elev-down" data-dir="down" aria-label="Elevate Down" title="Move Down">⮟</button>
+        </div>
       </div>
     </div>
   `;
+
+  // Attach tab switching on floating pad
+  const walkTab = container.querySelector<HTMLButtonElement>('#nav-mode-walk')!;
+  const lookTab = container.querySelector<HTMLButtonElement>('#nav-mode-look')!;
+  const walkView = container.querySelector<HTMLElement>('#dpad-walk-view')!;
+  const lookView = container.querySelector<HTMLElement>('#dpad-look-view')!;
+
+  walkTab.addEventListener('click', () => {
+    walkTab.classList.add('active');
+    lookTab.classList.remove('active');
+    walkView.style.display = 'flex';
+    lookView.style.display = 'none';
+  });
+
+  lookTab.addEventListener('click', () => {
+    lookTab.classList.add('active');
+    walkTab.classList.remove('active');
+    lookView.style.display = 'flex';
+    walkView.style.display = 'none';
+  });
 
   // Attach continuous walk/move events for all [data-dir] buttons
   const navButtons = container.querySelectorAll<HTMLButtonElement>('[data-dir]');
@@ -171,6 +237,30 @@ export function setupViewControls(
     const stop = () => {
       btn.classList.remove('active');
       sceneManager.setMove(dir, false);
+    };
+
+    btn.addEventListener('pointerdown', start);
+    btn.addEventListener('pointerup', stop);
+    btn.addEventListener('pointercancel', stop);
+    btn.addEventListener('pointerleave', stop);
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
+  });
+
+  // Attach continuous tilt/rotate events for all [data-rotate] buttons
+  const rotButtons = container.querySelectorAll<HTMLButtonElement>('[data-rotate]');
+  rotButtons.forEach(btn => {
+    const rot = btn.dataset.rotate as any;
+    if (!rot) return;
+
+    const start = (e: Event) => {
+      e.preventDefault();
+      btn.classList.add('active');
+      sceneManager.setRotate(rot, true);
+    };
+
+    const stop = () => {
+      btn.classList.remove('active');
+      sceneManager.setRotate(rot, false);
     };
 
     btn.addEventListener('pointerdown', start);
