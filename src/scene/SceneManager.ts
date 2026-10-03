@@ -97,8 +97,13 @@ export class SceneManager {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
     this.controls.enablePan = false;
+    this.controls.mouseButtons = {
+      LEFT: null as any,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: null as any
+    };
     this.controls.touches = {
-      ONE: THREE.TOUCH.ROTATE,
+      ONE: null as any,
       TWO: THREE.TOUCH.DOLLY_PAN
     };
     this.controls.target.set(0, DARTS_DIMENSIONS.BULLSEYE_HEIGHT_METERS * 0.6, 1.1);
@@ -142,29 +147,32 @@ export class SceneManager {
     this.updateBoardLighting();
     this.toggleDaylight(true);
 
-    // 6. Interactive Physical Light Switch raycasting on the right wall
+    // 6. Interactive Drag-to-Rotate View & Physical Light Switch raycasting
     const dom = this.renderer.domElement;
+    let isPointerDragging = false;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+
     dom.addEventListener('pointerdown', (e: PointerEvent) => {
       this.pointerDownPos.set(e.clientX, e.clientY);
-    });
-
-    dom.addEventListener('pointerup', (e: PointerEvent) => {
-      const dist = Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y);
-      if (dist < 15) { // Click/tap, not orbit drag (15px tolerates natural touch drift)
-        const rect = dom.getBoundingClientRect();
-        this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-        this.raycaster.setFromCamera(this.mouse, this.camera);
-        if (this.wallLightSwitch) {
-          const intersects = this.raycaster.intersectObjects(this.wallLightSwitch.children, true);
-          if (intersects.length > 0) {
-            this.toggleDaylight();
-          }
-        }
-      }
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+      isPointerDragging = true;
     });
 
     dom.addEventListener('pointermove', (e: PointerEvent) => {
+      if (isPointerDragging) {
+        const deltaX = e.clientX - lastPointerX;
+        const deltaY = e.clientY - lastPointerY;
+        lastPointerX = e.clientX;
+        lastPointerY = e.clientY;
+
+        // In-place gaze rotation: Camera position stays completely fixed,
+        // dragging only rotates the view around without moving through the room!
+        const sensitivity = 0.0035;
+        this.rotateViewInPlace(deltaX * sensitivity, deltaY * sensitivity);
+      }
+
       const rect = dom.getBoundingClientRect();
       this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -178,6 +186,30 @@ export class SceneManager {
         }
       }
     });
+
+    const stopDrag = (e: PointerEvent) => {
+      if (!isPointerDragging) return;
+      isPointerDragging = false;
+
+      const dist = Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y);
+      if (dist < 15) { // Click/tap on switch
+        const rect = dom.getBoundingClientRect();
+        this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        if (this.wallLightSwitch) {
+          const intersects = this.raycaster.intersectObjects(this.wallLightSwitch.children, true);
+          if (intersects.length > 0) {
+            this.toggleDaylight();
+          }
+        }
+      } else {
+        this.moveEndCallbacks.forEach(cb => cb());
+      }
+    };
+
+    dom.addEventListener('pointerup', stopDrag);
+    dom.addEventListener('pointercancel', stopDrag);
 
     // 7. Resize listener
     window.addEventListener('resize', this.onWindowResize);
@@ -386,6 +418,32 @@ export class SceneManager {
     );
   }
 
+  public rotateViewInPlace(deltaTheta: number, deltaPhi: number): void {
+    this.isTransitioning = false;
+    const lookDir = new THREE.Vector3().subVectors(this.controls.target, this.camera.position);
+    if (lookDir.lengthSq() < 0.0001) {
+      lookDir.set(0, 0, -1);
+    }
+    const spherical = new THREE.Spherical().setFromVector3(lookDir);
+
+    spherical.theta -= deltaTheta;
+    spherical.phi -= deltaPhi;
+
+    // Clamp polar angle so you can look up/down without inverting or flipping
+    spherical.phi = THREE.MathUtils.clamp(spherical.phi, 0.05, Math.PI - 0.05);
+    spherical.makeSafe();
+
+    lookDir.setFromSpherical(spherical);
+    this.controls.target.copy(this.camera.position).add(lookDir);
+    this.camera.lookAt(this.controls.target);
+    this.controls.update();
+
+    if (this.currentPreset !== null) {
+      this.currentPreset = null;
+      this.presetCallbacks.forEach(cb => cb(null));
+    }
+  }
+
   public onMoveEnd(callback: () => void): void {
     this.moveEndCallbacks.push(callback);
   }
@@ -480,25 +538,18 @@ export class SceneManager {
         }
       }
 
-      // Handle camera tilt and rotation
+      // Handle camera tilt and rotation buttons (rotates view in place without moving through room)
       if (this.isRotating()) {
         const rotAngle = this.rotateSpeed * deltaTime;
-        const offset = new THREE.Vector3().subVectors(this.camera.position, this.controls.target);
-        const spherical = new THREE.Spherical().setFromVector3(offset);
+        let deltaTheta = 0;
+        let deltaPhi = 0;
 
-        if (this.rotateState.rotateLeft) spherical.theta += rotAngle;
-        if (this.rotateState.rotateRight) spherical.theta -= rotAngle;
-        if (this.rotateState.tiltUp) spherical.phi += rotAngle;
-        if (this.rotateState.tiltDown) spherical.phi -= rotAngle;
+        if (this.rotateState.rotateLeft) deltaTheta += rotAngle;
+        if (this.rotateState.rotateRight) deltaTheta -= rotAngle;
+        if (this.rotateState.tiltUp) deltaPhi += rotAngle;
+        if (this.rotateState.tiltDown) deltaPhi -= rotAngle;
 
-        // Clamp polar angle so camera never goes below floor or inverts over north pole
-        spherical.phi = THREE.MathUtils.clamp(spherical.phi, 0.02, Math.PI / 2 - 0.02);
-        spherical.makeSafe();
-
-        offset.setFromSpherical(spherical);
-        this.camera.position.copy(this.controls.target).add(offset);
-        this.camera.lookAt(this.controls.target);
-        this.controls.update();
+        this.rotateViewInPlace(deltaTheta, deltaPhi);
       }
 
       if (this.isTransitioning) {
