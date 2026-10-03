@@ -76,40 +76,22 @@ export function setupViewControls(
       </div>
     </header>
 
-    <!-- Bottom HUD Row: Both Walk and Tilt controls visible at once (No Submenu) -->
+    <!-- Bottom HUD Row: Walk Pad & Orb Toggle (Rotate & Zoom handled naturally via touch gestures) -->
     <footer class="hud-bottom-row">
-      <!-- Left Pad: Walk & Elevation -->
+      <!-- Left Pad: Walk, Elevation & Orb Toggle -->
       <div class="hud-pad-box hud-pad-left glass-card" title="Touch & hold to walk / elevate">
-        <div class="pad-title">WALK</div>
+        <div class="pad-title">WALK & ELEVATE</div>
         <div class="pad-body">
           <div class="dpad-cluster">
             <button class="dpad-btn dpad-up" data-dir="forward" aria-label="Forward" title="Walk Forward">▲</button>
             <button class="dpad-btn dpad-left" data-dir="left" aria-label="Left" title="Strafe Left">◀</button>
-            <div class="dpad-center" title="Walk">🚶</div>
+            <button class="dpad-btn dpad-center dpad-orb-toggle active" id="hud-toggle-orb" aria-label="Toggle Orb Visibility" title="Toggle Floating Orb (ON / OFF)">🔮</button>
             <button class="dpad-btn dpad-right" data-dir="right" aria-label="Right" title="Strafe Right">▶</button>
             <button class="dpad-btn dpad-down" data-dir="backward" aria-label="Backward" title="Walk Backward">▼</button>
           </div>
           <div class="dpad-elevate-cluster">
             <button class="dpad-btn dpad-elev-up" data-dir="up" aria-label="Elevate Up" title="Move Up (E / Space)">⮝</button>
             <button class="dpad-btn dpad-elev-down" data-dir="down" aria-label="Elevate Down" title="Move Down (Q / C)">⮟</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Pad: Tilt & Turn View + Zoom -->
-      <div class="hud-pad-box hud-pad-right glass-card" title="Touch & hold to tilt, rotate or zoom">
-        <div class="pad-title">LOOK & ZOOM</div>
-        <div class="pad-body">
-          <div class="dpad-zoom-cluster">
-            <button class="dpad-btn dpad-zoom-in" data-zoom="zoomIn" aria-label="Zoom In" title="Zoom In (Closer to Orb)">➕</button>
-            <button class="dpad-btn dpad-zoom-out" data-zoom="zoomOut" aria-label="Zoom Out" title="Zoom Out (Further from Orb)">➖</button>
-          </div>
-          <div class="dpad-cluster">
-            <button class="dpad-btn dpad-up" data-rotate="tiltUp" aria-label="Tilt Up" title="Tilt View Up">▲</button>
-            <button class="dpad-btn dpad-left" data-rotate="rotateLeft" aria-label="Turn Left" title="Rotate View Left">◀</button>
-            <button class="dpad-btn dpad-center dpad-orb-toggle active" id="hud-toggle-orb" aria-label="Toggle Orb Visibility" title="Toggle Floating Orb (ON / OFF)">🔮</button>
-            <button class="dpad-btn dpad-right" data-rotate="rotateRight" aria-label="Turn Right" title="Rotate View Right">▶</button>
-            <button class="dpad-btn dpad-down" data-rotate="tiltDown" aria-label="Tilt Down" title="Tilt View Down">▼</button>
           </div>
         </div>
       </div>
@@ -131,54 +113,6 @@ export function setupViewControls(
     const stop = () => {
       btn.classList.remove('active');
       sceneManager.setMove(dir, false);
-    };
-
-    btn.addEventListener('pointerdown', start);
-    btn.addEventListener('pointerup', stop);
-    btn.addEventListener('pointercancel', stop);
-    btn.addEventListener('pointerleave', stop);
-    btn.addEventListener('contextmenu', (e) => e.preventDefault());
-  });
-
-  // Attach continuous tilt/rotate events for all [data-rotate] buttons
-  const rotButtons = container.querySelectorAll<HTMLButtonElement>('[data-rotate]');
-  rotButtons.forEach(btn => {
-    const rot = btn.dataset.rotate as any;
-    if (!rot) return;
-
-    const start = (e: Event) => {
-      e.preventDefault();
-      btn.classList.add('active');
-      sceneManager.setRotate(rot, true);
-    };
-
-    const stop = () => {
-      btn.classList.remove('active');
-      sceneManager.setRotate(rot, false);
-    };
-
-    btn.addEventListener('pointerdown', start);
-    btn.addEventListener('pointerup', stop);
-    btn.addEventListener('pointercancel', stop);
-    btn.addEventListener('pointerleave', stop);
-    btn.addEventListener('contextmenu', (e) => e.preventDefault());
-  });
-
-  // Attach continuous zoom in/out events for all [data-zoom] buttons
-  const zoomButtons = container.querySelectorAll<HTMLButtonElement>('[data-zoom]');
-  zoomButtons.forEach(btn => {
-    const zoom = btn.dataset.zoom as 'zoomIn' | 'zoomOut';
-    if (!zoom) return;
-
-    const start = (e: Event) => {
-      e.preventDefault();
-      btn.classList.add('active');
-      sceneManager.setZoom(zoom, true);
-    };
-
-    const stop = () => {
-      btn.classList.remove('active');
-      sceneManager.setZoom(zoom, false);
     };
 
     btn.addEventListener('pointerdown', start);
